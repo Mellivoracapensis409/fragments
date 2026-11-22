@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fragments — énigme fossile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;
+--bg:light-dark(#ecd8bf,#1a120f);
+--ink:light-dark(#2a1610,#f2e4d2);
+--soft:light-dark(#6b4a3a,#bfa28d);
+--panel:light-dark(#f6e9d7,#261a15);
+--line:light-dark(#d3b89b,#3d2b23);
+--oxide:#7a2f1d;
+--bone:#ecdfc6;
+--accent:#14b1c4;
+--accent-ink:light-dark(#0b6f7c,#5fd6e4);
+--good:light-dark(#2f7a46,#6fd08d);
+--bad:light-dark(#b23a22,#ff8a6e)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Public Sans",system-ui,sans-serif;overflow-x:clip}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+header{background:var(--oxide);color:var(--bone);position:relative;padding:12px max(4vw,16px) 22px}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:linear-gradient(180deg,#a8452b 0 25%,#8e8a80 25% 45%,#c46a3f 45% 62%,#6f5d55 62% 80%,#d79b6a 80%)}
+.top{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{font:800 40px/1 "Big Shoulders Stencil Display",Impact,sans-serif;margin:0;letter-spacing:.01em}
+.brand span{font-size:14px;opacity:.85}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid rgba(236,223,198,.45);background:transparent;color:var(--bone);border-radius:999px;padding:0 14px;min-height:42px;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--bone);color:var(--oxide);border-color:var(--bone);font-weight:600}
+.chip[disabled]{opacity:.55;cursor:default}
+.chip small{font-size:12px;opacity:.8}
+.icon-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid rgba(236,223,198,.45);background:rgba(0,0,0,.15);color:var(--bone);cursor:pointer;font-size:14px;white-space:nowrap}
+.icon-btn svg{width:20px;height:20px}
+@media(max-width:1320px){.brand span{display:none}}
+main{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px 22px;align-items:start}
+.subbar{grid-column:1/-1;display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+.subbar .info{display:flex;gap:16px;flex-wrap:wrap;font-weight:600}
+.subbar .info span{white-space:nowrap}
+.subbar .info small{font-weight:500;color:var(--soft)}
+.levels{display:flex;margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.levels button{border:0;background:transparent;border-radius:999px;min-height:38px;padding:0 14px;cursor:pointer;font-size:14px;color:var(--soft);white-space:nowrap}
+.levels button[aria-pressed=true]{background:var(--oxide);color:var(--bone);font-weight:600}
+.levels[hidden]{display:none}
+.stage{position:relative;border-radius:16px;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,#3a2820 0,#22160f 70%,#1a100b 100%);box-shadow:0 18px 40px -20px rgba(40,15,5,.6),inset 0 0 0 1px rgba(255,255,255,.05);aspect-ratio:8/5.4;touch-action:none;user-select:none}
+.stage::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,230,200,.07) 1px,transparent 1.4px),radial-gradient(rgba(0,0,0,.25) 1px,transparent 1.6px);background-size:7px 7px,11px 11px;background-position:0 0,3px 5px;pointer-events:none;z-index:1}
+.grid{position:absolute;inset:0;z-index:3;pointer-events:none}
+.viewport{position:absolute;inset:0;overflow:hidden;z-index:2;cursor:zoom-in}
+.viewport.zoomed{cursor:grab}.viewport.dragging{cursor:grabbing}
+.zoomable{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.layer{position:absolute;inset:0}
+.layer svg{width:100%;height:100%;display:block}
+.layer.enter{animation:dig 1.1s cubic-bezier(.2,.7,.2,1) both}
+.layer.leave{animation:fade .6s ease both}
+@keyframes dig{0%{clip-path:circle(0% at 50% 48%);filter:brightness(1.8) blur(3px)}60%{filter:brightness(1.1) blur(0)}100%{clip-path:circle(85% at 50% 48%);filter:none}}
+@keyframes fade{to{opacity:0}}
+.dust{position:absolute;inset:0;z-index:4;pointer-events:none;width:100%;height:100%}
+.hud{position:absolute;z-index:5;display:flex;gap:8px;align-items:center}
+.hud.tl{top:12px;left:12px;right:12px;flex-wrap:wrap}.hud.br{bottom:12px;right:12px}.hud.bl{bottom:12px;left:12px}
+.tag{display:inline-flex;align-items:center;gap:6px;background:rgba(20,10,6,.72);color:var(--bone);border-radius:8px;padding:5px 10px;font-size:13px;backdrop-filter:blur(4px);border:1px solid rgba(236,223,198,.18)}
+.tag b{font-weight:700}
+.cert{display:inline-flex;align-items:center;gap:6px}.cert::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--bone);flex:none}
+.cert.estimation::before{background:var(--accent)}
+.cert.hypothese::before{background:transparent;border:2px dashed #f2b24c;width:7px;height:7px}
+.zbtn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(236,223,198,.25);background:rgba(20,10,6,.72);color:var(--bone);font-size:22px;line-height:1;cursor:pointer;backdrop-filter:blur(4px)}
+.zbtn.small{font-size:13px;width:auto;padding:0 12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:18px}
+.step-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.step-head .n{font-size:14px;color:var(--soft)}
+.pts{font:800 34px/1 "Big Shoulders Stencil Display",Impact,sans-serif;color:var(--accent-ink);white-space:nowrap}
+.pts small{font:500 13px "Public Sans",sans-serif;color:var(--soft)}
+#clueTitle{font:800 32px/1.05 "Big Shoulders Stencil Display",Impact,sans-serif;margin:4px 0 0;text-wrap:balance}
+#clueText{margin:6px 0 0}
+.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;list-style:none;margin:0;padding:0}
+.track button{width:100%;min-height:52px;border-radius:10px;border:1px solid var(--line);background:transparent;cursor:pointer;display:grid;place-items:center;padding:4px 2px;font-size:12px;color:var(--soft)}
+.track button b{font-size:15px;color:var(--ink)}
+.track button.done{background:light-dark(#eedbc2,#30211a)}
+.track button.current{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.track button.viewing{background:var(--oxide);color:var(--bone);border-color:var(--oxide)}
+.track button.viewing b{color:var(--bone)}
+.track button.locked{cursor:default;opacity:.55;border-style:dashed}
+.combo{position:relative}
+.combo label{display:block;font-weight:600;margin-bottom:6px}
+.combo input{width:100%;min-height:50px;font-size:17px;padding:0 14px 0 44px;border-radius:12px;border:1.5px solid var(--line);background:light-dark(#fffaf2,#1d1410);color:var(--ink)}
+.combo input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.combo input:disabled{opacity:.5}
+.combo .mag{position:absolute;left:14px;bottom:15px;width:20px;height:20px;color:var(--soft)}
+#sugg{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:6px;list-style:none;background:light-dark(#fffaf2,#221813);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 30px -12px rgba(0,0,0,.35);z-index:20;max-height:260px;overflow:auto}
+#sugg[hidden]{display:none}
+#sugg li{padding:10px 12px;border-radius:8px;cursor:pointer;min-height:44px;display:flex;align-items:center}
+#sugg li[aria-selected=true]{background:light-dark(#e6f6f8,#14353a)}
+#sugg li.tried{opacity:.45;text-decoration:line-through;cursor:default}
+#sugg .empty{color:var(--soft);cursor:default}
+.actions{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px}
+.btn{min-height:50px;border-radius:12px;border:0;font-weight:700;font-size:16px;cursor:pointer;padding:0 14px}
+.btn.primary{background:var(--oxide);color:var(--bone)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.ghost small{display:block;font-weight:500;font-size:12px;color:var(--soft)}
+.feedback{min-height:24px;margin:0;font-size:15px}
+.feedback.bad{color:var(--bad)}.feedback.good{color:var(--good)}
+.tried-list{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.tried-list:empty{display:none}
+.tried-list li{font-size:13px;padding:3px 10px;border-radius:999px;background:light-dark(#f3d9cf,#3a1f18);color:var(--bad);text-decoration:line-through}
+.legend{font-size:13px;color:var(--soft);display:flex;gap:6px 14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .cert::before,.unknown .cert::before{border:1px solid var(--soft)}
+#fiche{position:fixed;inset:0;z-index:50;background:rgba(15,7,4,.6);backdrop-filter:blur(6px);display:grid;place-items:start center;overflow:auto;padding:24px 12px}
+#fiche[hidden]{display:none}
+.sheet{width:min(980px,100%);background:var(--panel);border-radius:18px;overflow:hidden;border:1px solid var(--line);animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{transform:translateY(30px);opacity:0}}
+.sheet-hero{position:relative;background:radial-gradient(120% 90% at 50% 40%,#3a2820 0,#1d120c 100%);aspect-ratio:8/4.6}
+.sheet-hero svg{width:100%;height:100%;display:block}
+.result{position:absolute;left:16px;top:16px;right:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sheet-body{padding:clamp(18px,3vw,34px);display:grid;gap:26px}
+.sheet h2{font:800 52px/1 "Big Shoulders Stencil Display",Impact,sans-serif;margin:0}
+.sheet h2 + p{margin:6px 0 0;color:var(--soft)}
+.sheet h3{font:800 26px/1.1 "Big Shoulders Stencil Display",Impact,sans-serif;margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0}
+.facts div{border-top:2px solid var(--oxide);padding-top:8px}
+.facts dt{font-size:13px;color:var(--soft)}
+.facts dd{margin:2px 0 0;font-weight:600}
+.cols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px}
+.side{display:grid;gap:24px;align-content:start}
+.why{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.why li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px}
+.why li i{font:800 22px/34px "Big Shoulders Stencil Display",sans-serif;text-align:center;background:var(--oxide);color:var(--bone);border-radius:8px;height:34px}
+.why li.hit i{background:var(--accent);color:#06343a}
+.why li strong{display:block}
+.unknown{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.unknown li{padding:10px 12px;border-radius:10px;border:1px dashed var(--line)}
+.unknown li b{display:flex;align-items:center;gap:8px}
+.listen{margin-top:8px;min-height:44px;border-radius:10px;border:1.5px solid var(--accent);background:transparent;color:var(--accent-ink);font-weight:600;padding:0 14px;cursor:pointer}
+.confus{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.confus li{padding:8px 0;border-bottom:1px solid var(--line)}
+.confus li.mine strong::after{content:" · ta proposition";color:var(--bad);font-weight:500;font-size:13px}
+.sources{font-size:14px;margin:0;padding-left:18px;color:var(--soft)}
+.sources a{color:var(--accent-ink)}
+.sheet-actions{display:flex;gap:10px;flex-wrap:wrap}
+.sheet-actions .btn{flex:1 1 200px}
+.note{font-size:13px;color:var(--soft);margin:0}
+.recap{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.recap li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.recap .dots{display:flex;gap:4px}
+.recap .dots i{width:14px;height:14px;border-radius:3px;background:var(--line)}
+.recap .dots i.w{background:#c46a3f}.recap .dots i.g{background:var(--accent)}
+.recap b{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;min-width:60px}
+.big{font:800 64px/1 "Big Shoulders Stencil Display",Impact,sans-serif;color:var(--accent-ink)}
+.bilan{padding:clamp(20px,4vw,40px);display:grid;gap:22px}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.cols{grid-template-columns:minmax(0,1fr)}.levels{margin-left:0}}
+@media(max-width:600px){header{padding-bottom:18px}.brand h1{font-size:34px}.modes{order:3;width:100%;overflow-x:auto;flex-wrap:nowrap}main{padding-top:12px;gap:12px}.stage{aspect-ratio:4/3.4;border-radius:12px}.hud.bl{display:none}.panel{padding:16px}.sheet h2{font-size:40px}.sheet-hero{aspect-ratio:8/5.4}#clueTitle{font-size:28px}.levels{width:100%}.levels button{flex:1;padding:0 6px}}
+@media(prefers-reduced-motion:reduce){.layer.enter,.layer.leave,.sheet{animation:none}.layer.leave{opacity:0}}
+</style>
+</head>
+<body>
+<header>
+<div class="top">
+<div class="brand"><h1>Fragments</h1><span>Reconnais l'animal à partir de ses restes</span></div>
+<div class="modes" role="group" aria-label="Mode de jeu">
+<button class="chip" data-mode="libre" aria-pressed="true">Partie libre</button>
+<button class="chip" data-mode="jour" aria-pressed="false">Défi du jour</button>
+<button class="chip" disabled>Animaux actuels <small>bientôt</small></button>
+</div>
+<button class="icon-btn" id="soundBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWave" d="M17 9l4 6M21 9l-4 6"/></svg><span id="soundLbl">Son coupé</span></button>
+</div>
+</header>
+<main>
+<div class="subbar">
+<div class="info"><span id="roundInfo">Manche 1 / 6</span><span id="scoreInfo">Score : 0</span></div>
+<div class="levels" id="levels" role="group" aria-label="Niveau">
+<button data-level="tous" aria-pressed="true">Tous niveaux</button>
+<button data-level="celebre" aria-pressed="false">Célèbres</button>
+<button data-level="inter" aria-pressed="false">Intermédiaires</button>
+</div>
+</div>
+<section class="stage" aria-label="Zone d'observation du fossile">
+<div class="viewport" id="viewport"><div class="zoomable" id="zoomable"></div></div>
+<svg class="grid" viewBox="0 0 800 540" preserveAspectRatio="none" aria-hidden="true" id="gridSvg"></svg>
+<canvas class="dust" id="dust"></canvas>
+<div class="hud tl"><span class="tag" id="stepTag">Indice 1 / 5</span><span class="tag cert" id="certTag">Établi par les fossiles</span></div>
+<div class="hud bl"><span class="tag" id="zoomTag">Pince ou molette pour zoomer</span></div>
+<div class="hud br"><button class="zbtn" id="zOut" aria-label="Dézoomer">−</button><button class="zbtn" id="zIn" aria-label="Zoomer">+</button><button class="zbtn small" id="zReset">1:1</button></div>
+</section>
+<section class="panel" aria-live="polite">
+<div>
+<div class="step-head"><span class="n" id="stepN">Indice 1 sur 5</span><span class="pts" id="ptsNow">100 <small>pts si tu trouves maintenant</small></span></div>
+<h2 id="clueTitle">Une dent minuscule</h2>
+<p id="clueText"></p>
+</div>
+<ol class="track" id="track" aria-label="Progression des indices"></ol>
+<div class="combo">
+<label for="guess">Ta réponse</label>
+<svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+<input id="guess" type="text" autocomplete="off" spellcheck="false" placeholder="Tape un nom : stego, tricé, rex…" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list">
+<ul id="sugg" role="listbox" hidden></ul>
+</div>
+<div class="actions">
+<button class="btn primary" id="submitBtn" disabled>Proposer</button>
+<button class="btn ghost" id="skipBtn"><span id="skipMain">Indice suivant</span><small id="skipSub">sans répondre</small></button>
+</div>
+<p class="feedback" id="feedback"></p>
+<ul class="tried-list" id="tried" aria-label="Propositions écartées"></ul>
+<div class="legend"><span class="cert">Établi par les fossiles</span><span class="cert estimation">Estimation</span><span class="cert hypothese">Hypothèse ou invention</span></div>
+</section>
+</main>
+<section id="fiche" hidden role="dialog" aria-modal="true" aria-labelledby="ficheName"><div class="sheet" id="sheet"></div></section>
+<script>
+{
+const NS='http://www.w3.org/2000/svg';
+const POINTS=[100,70,45,25,10];
+const CERT={fossile:'Établi par les fossiles',estimation:'Estimation',hypothese:'Hypothèse ou invention',reconst:'Fossiles et parties reconstituées'};
+const LEVELS={celebre:'Célèbre',inter:'Intermédiaire'};
+
+const SPECIES=[
+{id:'stegosaurus',name:'Stegosaurus',alias:['stego','stégosaure'],info:'Stégosaure du Jurassique supérieur d\'Amérique du Nord.'},
+{id:'kentrosaurus',name:'Kentrosaurus',alias:['kentro'],info:'Stégosaure du Jurassique supérieur de Tanzanie, environ 4,5 à 5 m.'},
+{id:'hesperosaurus',name:'Hesperosaurus',alias:['stegosaurus mjosi'],info:'Stégosaure de la formation de Morrison, plus petit que Stegosaurus.'},
+{id:'huayangosaurus',name:'Huayangosaurus',alias:[],info:'Petit stégosaure du Jurassique moyen de Chine.'},
+{id:'dacentrurus',name:'Dacentrurus',alias:[],info:'Stégosaure du Jurassique supérieur d\'Europe.'},
+{id:'ankylosaurus',name:'Ankylosaurus',alias:['ankylosaure','ankylo'],info:'Ankylosaure à massue de la toute fin du Crétacé, Amérique du Nord.'},
+{id:'euoplocephalus',name:'Euoplocephalus',alias:['euoplo'],info:'Ankylosaure à massue du Crétacé supérieur (≈ 76 Ma), Canada.'},
+{id:'triceratops',name:'Triceratops',alias:['tricératops','tricé','trice'],info:'Cératopsidé de la toute fin du Crétacé, Amérique du Nord.'},
+{id:'torosaurus',name:'Torosaurus',alias:['toro'],info:'Cératopsidé de la fin du Crétacé à longue collerette percée.'},
+{id:'styracosaurus',name:'Styracosaurus',alias:['styraco'],info:'Cératopsidé du Crétacé supérieur (≈ 75 Ma) à longue corne nasale et collerette épineuse.'},
+{id:'tyrannosaurus',name:'Tyrannosaurus rex',alias:['t-rex','trex','t. rex','tyrannosaure','rex','tyrannosaurus'],info:'Grand carnivore de la toute fin du Crétacé, Amérique du Nord.'},
+{id:'tarbosaurus',name:'Tarbosaurus',alias:['tarbo'],info:'Tyrannosauridé du Crétacé supérieur de Mongolie.'},
+{id:'giganotosaurus',name:'Giganotosaurus',alias:['giga','giganoto'],info:'Grand carnivore d\'Argentine, vers 98 Ma, trois doigts à la main.'},
+{id:'allosaurus',name:'Allosaurus',alias:['allosaure','allo'],info:'Carnivore du Jurassique supérieur, trois doigts à la main.'},
+{id:'ceratosaurus',name:'Ceratosaurus',alias:['cératosaure'],info:'Carnivore du Jurassique supérieur à corne nasale.'},
+{id:'velociraptor',name:'Velociraptor',alias:['vélociraptor','raptor'],info:'Petit carnivore à plumes du Crétacé supérieur de Mongolie.'},
+{id:'spinosaurus',name:'Spinosaurus',alias:['spino'],info:'Carnivore du Crétacé d\'Afrique du Nord, dents coniques.'},
+{id:'parasaurolophus',name:'Parasaurolophus',alias:['para','parasaurolophe'],info:'Hadrosaure à crête tubulaire du Crétacé supérieur.'},
+{id:'corythosaurus',name:'Corythosaurus',alias:['corytho'],info:'Hadrosaure à crête en casque du Crétacé supérieur.'},
+{id:'lambeosaurus',name:'Lambeosaurus',alias:['lambeo'],info:'Hadrosaure à crête en hachette du Crétacé supérieur.'},
+{id:'edmontosaurus',name:'Edmontosaurus',alias:['edmonto'],info:'Hadrosaure sans crête osseuse de la fin du Crétacé.'},
+{id:'iguanodon',name:'Iguanodon',alias:[],info:'Ornithopode du Crétacé inférieur d\'Europe.'},
+{id:'pachycephalosaurus',name:'Pachycephalosaurus',alias:['pachy'],info:'Dinosaure à dôme crânien de la fin du Crétacé.'},
+{id:'diplodocus',name:'Diplodocus',alias:['diplo'],info:'Sauropode élancé du Jurassique supérieur d\'Amérique du Nord.'},
+{id:'apatosaurus',name:'Apatosaurus',alias:['apato','brontosaure'],info:'Sauropode massif du Jurassique supérieur d\'Amérique du Nord.'},
+{id:'barosaurus',name:'Barosaurus',alias:['baro'],info:'Sauropode à très long cou du Jurassique supérieur d\'Amérique du Nord.'},
+{id:'brachiosaurus',name:'Brachiosaurus',alias:['brachio','brachiosaure'],info:'Sauropode aux dents en cuillère et aux pattes avant hautes, Jurassique supérieur.'}
+];
+
+const f=v=>(+v).toFixed(1);
+const bez=(s,t)=>{const m=1-t;return[0,1].map(k=>m*m*m*s[0][k]+3*m*m*t*s[1][k]+3*m*t*t*s[2][k]+t*t*t*s[3][k])};
+const crSegs=(p,closed)=>{const n=p.length,g=i=>closed?p[((i%n)+n)%n]:p[Math.max(0,Math.min(n-1,i))];const out=[];const m=closed?n:n-1;for(let i=0;i<m;i++){const a=g(i-1),b=g(i),c=g(i+1),e=g(i+2);out.push([b,[b[0]+(c[0]-a[0])/6,b[1]+(c[1]-a[1])/6],[c[0]-(e[0]-b[0])/6,c[1]-(e[1]-b[1])/6],c])}return out};
+const cr=(p,closed=true)=>{const s=crSegs(p,closed);return`M${f(p[0][0])} ${f(p[0][1])}`+s.map(q=>`C${f(q[1][0])} ${f(q[1][1])} ${f(q[2][0])} ${f(q[2][1])} ${f(q[3][0])} ${f(q[3][1])}`).join('')+(closed?'Z':'')};
+const mkLine=segs=>{const pts=[];segs.forEach(s=>{for(let k=0;k<40;k++)pts.push(bez(s,k/40))});const l=segs[segs.length-1][3];pts.push(l);let L=0;const lut=[{p:pts[0],l:0}];for(let i=1;i<pts.length;i++){L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);lut.push({p:pts[i],l:L})}lut.forEach(o=>o.l/=L);return u=>{let i=lut.findIndex(o=>o.l>=u);if(i<1)i=1;if(i>=lut.length)i=lut.length-1;const a=lut[i-1].p,b=lut[i].p;const d=Math.hypot(b[0]-a[0],b[1]-a[1])||1;const t=[(b[0]-a[0])/d,(b[1]-a[1])/d];return{p:a,t,n:[t[1],-t[0]]}}};
+const tr=(p,dx,dy)=>p.map(q=>[q[0]+dx,q[1]+dy]);
+const pl=p=>'M'+p.map(q=>f(q[0])+' '+f(q[1])).join('L');
+const rng=s=>()=>(s=(s*16807)%2147483647)/2147483647;
+const FONT='font-family="Public Sans,sans-serif"';
+const svg=inner=>`<svg viewBox="0 0 800 540" xmlns="${NS}" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
+const txt=(x,y,s,o={})=>`<text x="${x}" y="${y}" fill="${o.c||'#ecdfc6'}" font-size="${o.s||15}" ${FONT} text-anchor="${o.a||'start'}" opacity="${o.o||.85}" ${o.w?`font-weight="${o.w}"`:''}>${s}</text>`;
+const scaleBar=(x,y0,len,label)=>{const y=Math.min(y0,430);return`<g stroke="#ecdfc6" fill="none" stroke-width="2.5"><path d="M${x} ${y}h${len}M${x} ${y-7}v14M${x+len} ${y-7}v14"/></g>${txt(x+len/2,y+26,label,{a:'middle',s:17,o:1})}`};
+const B=(d,w=12)=>`<path d="${d}" stroke="#2b1b12" stroke-width="${w+6}" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="${d}" stroke="#e4d3b2" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+const shadowDef=id=>`<filter id="${id}" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".55"/></filter>`;
+const boneGrad=(id,a='#f3e6cc',b='#cdb48e',c='#8f744f')=>`<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".6" stop-color="${b}"/><stop offset="1" stop-color="${c}"/></linearGradient>`;
+const ticks=(seg,n,len)=>{let d='';for(let k=1;k<n;k++){const t=k/n,p=bez(seg,t),q=bez(seg,Math.min(1,t+.01));const dl=Math.hypot(q[0]-p[0],q[1]-p[1])||1;const nx=(q[1]-p[1])/dl,ny=-(q[0]-p[0])/dl;d+=`M${f(p[0])} ${f(p[1])}l${f(nx*len)} ${f(ny*len)}`}return d};
+
+const SSEG=[[[145,252],[190,245],[230,215],[300,180]],[[300,180],[360,150],[420,140],[470,150]],[[470,150],[540,165],[620,195],[700,222]]];
+const sAt=mkLine(SSEG);
+const splate=(u,scale,sink)=>{const{p,t,n}=sAt(u);const s=Math.sin(Math.PI*Math.pow(Math.min(1,Math.max(0,(u-.02)/.95)),1.25));const h=(12+84*Math.pow(s,1.8))*scale;const w=Math.min(h*.95,68)*scale;const b1=[p[0]-t[0]*w/2-n[0]*sink,p[1]-t[1]*w/2-n[1]*sink],b2=[p[0]+t[0]*w/2-n[0]*sink,p[1]+t[1]*w/2-n[1]*sink];const ap=[p[0]+n[0]*h+t[0]*h*.16,p[1]+n[1]*h+t[1]*h*.16];const c1=[b1[0]+n[0]*h*.62-t[0]*w*.28,b1[1]+n[1]*h*.62-t[1]*w*.28],c2=[ap[0]-t[0]*w*.42,ap[1]-t[1]*w*.42],c3=[ap[0]+t[0]*w*.3,ap[1]+t[1]*w*.3],c4=[b2[0]+n[0]*h*.55+t[0]*w*.22,b2[1]+n[1]*h*.55+t[1]*w*.22];return`M${f(b1[0])} ${f(b1[1])}C${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(ap[0])} ${f(ap[1])}C${f(c3[0])} ${f(c3[1])} ${f(c4[0])} ${f(c4[1])} ${f(b2[0])} ${f(b2[1])}Z`};
+const SBODY='M70 268Q80 255 100 252Q125 248 145 252C190 245 230 215 300 180C360 150 420 140 470 150C540 165 620 195 700 222L772 236L700 241C630 246 560 251 522 262L514 290C517 320 508 340 504 356L508 364L462 364L468 352C472 330 470 312 456 296C400 302 330 302 282 298L266 306C266 330 262 345 260 356L264 364L226 364L232 352C236 335 236 315 228 296C200 287 170 286 145 283Q110 286 90 281Q75 277 70 268Z';
+const frontU=[.06,.15,.25,.35,.45,.55,.65,.75,.85],backU=[.1,.2,.3,.4,.5,.6,.7,.8];
+const SPIKES=[[700,224,742,170],[712,227,768,192],[730,230,786,186],[742,232,800,214]];
+const spike=(x,y,X,Y,w)=>{const d=Math.hypot(X-x,Y-y),nx=-(Y-y)/d*w,ny=(X-x)/d*w;return`M${f(x-nx)} ${f(y-ny)}Q${f((x+X)/2-nx*.4)} ${f((y+Y)/2-ny*.4)} ${X} ${Y}Q${f((x+X)/2+nx*.4)} ${f((y+Y)/2+ny*.4)} ${f(x+nx)} ${f(y+ny)}Z`};
+
+const ANAT={
+tyrannosaurus:{ppm:59.5,bar:[2,'≈ 2 m'],
+body:[[58,200],[72,184],[110,174],[142,170],[160,178],[178,192],[220,184],[300,168],[380,166],[470,182],[580,204],[690,226],[772,240],[690,240],[580,232],[480,230],[440,236],[442,276],[440,316],[448,352],[462,384],[470,394],[396,396],[400,386],[422,380],[410,350],[380,318],[352,284],[320,266],[280,262],[236,248],[208,232],[184,224],[156,222],[120,222],[84,216],[60,208]],
+far:[tr([[436,240],[428,272],[432,312],[446,352],[462,384],[470,394],[396,396],[400,386],[422,380],[410,350],[392,312],[372,278],[400,250]],22,-4)],
+col:['#4f4c3a','#857653','#d4c39b','#3a3627'],eye:[128,186],
+spots:[[300,200,40,8,-8],[380,196,36,8,-4],[460,206,34,7,6],[540,218,30,6,10],[620,232,26,5,12]],
+fx:`<path d="M232 238Q246 252 248 262" stroke="#6b5d40" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M246 262l8 7M247 263l3 9" stroke="#e8dcc0" stroke-width="2.5" stroke-linecap="round"/><path d="M70 210l4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6" stroke="#f2ead6" stroke-width="2" fill="none"/><path d="M64 206Q110 214 150 212" stroke="#2b2212" stroke-width="2" fill="none"/><ellipse cx="72" cy="192" rx="4" ry="2.5" fill="#2b2212"/>`,
+spine:[[152,186],[188,198],[230,190],[300,180],[380,178],[470,192],[580,212],[690,232],[762,240]],vr:5.5,
+ribs:[.12,.36,.03,256],ell:[[395,200,42,18,10],[228,212,10,26,30]],
+bones:[[[402,214],[392,300],[430,368],[442,390]],[[442,392],[398,394]],[[232,238],[246,258],[242,268]]],
+skull:[[58,200],[72,184],[110,174],[142,170],[160,178],[166,198],[150,216],[120,222],[84,216],[60,208]],holes:[[102,194,16,8],[136,186,8,8],[155,201,5,9]],
+skx:`<path d="M62 206Q100 212 152 212" stroke="#2b1b12" stroke-width="3" fill="none"/><path d="M70 207l3 7 3-7 3 7 3-7 3 7 3-7 3 7 3-7 3 7 3-7 3 7 3-7 3 7 3-7" stroke="#f5ecd8" stroke-width="2" fill="none"/>`},
+triceratops:{ppm:74,bar:[2,'≈ 2 m'],
+body:[[62,262],[74,246],[100,234],[140,222],[168,196],[190,160],[214,138],[234,140],[246,170],[250,214],[290,206],[370,190],[450,194],[540,216],[640,252],[722,282],[732,292],[640,280],[560,268],[522,270],[516,300],[518,350],[522,386],[530,396],[478,396],[482,386],[476,350],[462,312],[400,320],[330,320],[300,324],[298,360],[300,388],[306,396],[256,396],[262,386],[262,356],[250,322],[232,304],[200,292],[160,284],[120,278],[90,272],[68,268]],
+far:[tr([[522,270],[516,300],[518,350],[522,386],[530,396],[478,396],[482,386],[476,350],[462,312],[480,280]],20,-4),tr([[300,324],[298,360],[300,388],[306,396],[256,396],[262,386],[262,356],[250,322],[275,305]],22,-4)],
+col:['#5f4b34','#9a7650','#dcc39a','#3e2f20'],eye:[150,234],
+spots:[[330,230,30,7,-6],[410,222,30,7,0],[490,232,28,6,8],[570,250,24,6,14]],
+bx:`<path d="M168 220C150 196 128 172 108 152C126 170 150 190 176 214Z" fill="#a99572" stroke="#2b2212" stroke-width="2"/>`,
+fx:`<path d="M150 216C136 190 116 168 96 150C120 166 144 186 162 214Z" fill="#e6d7b6" stroke="#2b2212" stroke-width="2"/><path d="M92 236L84 212L102 232Z" fill="#e6d7b6" stroke="#2b2212" stroke-width="2"/><path d="M62 262Q66 252 78 248Q74 262 68 268Z" fill="#3a3020"/><path d="M176 196Q198 160 222 146Q238 160 242 196" stroke="#7b3f2a" stroke-width="10" fill="none" opacity=".55"/><g fill="#d9c7a3" stroke="#2b2212" stroke-width="1.5">${[[180,176],[192,156],[206,142],[222,136],[238,146],[246,166]].map(p=>`<path d="M${p[0]-6} ${p[1]+4}L${p[0]} ${p[1]-8}L${p[0]+6} ${p[1]+4}Z"/>`).join('')}</g>`,
+spine:[[250,216],[300,212],[370,198],[450,202],[540,222],[640,256],[720,284]],vr:5.5,
+ribs:[.05,.33,.035,312],ell:[[455,215,42,20,12],[282,240,14,36,25]],
+bones:[[[460,226],[476,300],[490,352],[500,390]],[[500,392],[480,394]],[[282,262],[278,320],[284,356],[282,390]],[[282,392],[266,394]]],
+skull:[[62,262],[74,246],[100,234],[140,222],[168,196],[190,160],[214,138],[234,140],[246,170],[250,214],[230,248],[200,272],[160,280],[120,276],[90,270],[68,268]],holes:[[150,234,8,8],[84,252,8,6],[192,250,9,14]],
+skx:`<path d="M150 216C136 190 116 168 96 150C120 166 144 186 162 214Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><path d="M92 236L84 212L102 232Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><path d="M262 118L222 150" stroke="#ecdfc6" stroke-width="1.5" opacity=".7"/>${txt(268,114,'collerette pleine, sans ouverture')}`},
+ankylosaurus:{ppm:99,bar:[1,'≈ 1 m'],
+body:[[70,300],[80,282],[106,268],[134,264],[156,266],[200,240],[300,216],[400,212],[480,228],[540,256],[620,288],[690,300],[706,292],[742,290],[766,304],[760,322],[732,328],[702,320],[640,318],[560,318],[540,330],[545,370],[548,392],[504,394],[508,372],[500,342],[430,344],[300,344],[282,346],[282,375],[284,392],[240,394],[244,372],[240,342],[200,332],[166,320],[120,316],[86,312]],
+far:[tr([[540,330],[545,370],[548,392],[504,394],[508,372],[500,342],[515,322]],20,-4),tr([[282,346],[282,375],[284,392],[240,394],[244,372],[240,342],[262,330]],20,-4)],
+col:['#4e4636','#86744f','#cdb991','#352e22'],eye:[118,284],
+spots:[],
+fx:`<g fill="#b9a47c" stroke="#2b2212" stroke-width="1.5">${(()=>{const L=mkLine(crSegs([[160,262],[200,240],[300,216],[400,212],[480,228],[540,256],[620,288],[690,300]],false));let s='';for(let u=.04;u<.98;u+=.045){const{p}=L(u);s+=`<ellipse cx="${f(p[0])}" cy="${f(p[1]+8)}" rx="11" ry="6"/><ellipse cx="${f(p[0]+4)}" cy="${f(p[1]+30)}" rx="10" ry="6"/>`}for(let u=.12;u<.85;u+=.06){const{p}=L(u);s+=`<ellipse cx="${f(p[0]-6)}" cy="${f(p[1]+54)}" rx="9" ry="5"/>`}return s})()}</g><g fill="#d6c49c" stroke="#2b2212" stroke-width="1.5">${[230,290,350,410,470,520].map((x,i)=>`<path d="M${x-10} ${330-i*2}L${x+6} ${348-i*2}L${x+10} ${328-i*2}Z"/>`).join('')}</g><path d="M138 262L156 248L152 268Z" fill="#d6c49c" stroke="#2b2212" stroke-width="1.5"/><path d="M128 306L146 324L142 304Z" fill="#d6c49c" stroke="#2b2212" stroke-width="1.5"/><ellipse cx="732" cy="306" rx="34" ry="20" fill="#9c8762" stroke="#2b2212" stroke-width="2"/><ellipse cx="722" cy="300" rx="16" ry="8" fill="#c9b68f" opacity=".6"/><path d="M70 300Q78 306 90 306" stroke="#2b2212" stroke-width="2" fill="none"/>`,
+spine:[[156,272],[200,252],[300,230],[400,226],[480,240],[540,266],[620,296],[700,308]],vr:5,
+ribs:[.1,.45,.03,336],ell:[[470,238,50,16,8],[250,262,12,30,25]],
+bones:[[[480,248],[500,320],[522,365],[528,390]],[[528,392],[508,394]],[[255,282],[262,330],[260,365],[262,390]],[[262,392],[244,394]]],
+skull:[[70,300],[80,282],[106,268],[134,264],[150,272],[152,296],[130,312],[100,316],[80,312]],holes:[[118,284,7,7],[86,292,5,4]],
+skx:`<path d="M138 262L156 248L152 268Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="2.5"/><path d="M128 306L146 324L142 304Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="2.5"/><ellipse cx="732" cy="306" rx="34" ry="20" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><path d="M630 300L700 308" stroke="#d9c6a2" stroke-width="3" stroke-dasharray="10 4"/>`},
+parasaurolophus:{ppm:76,bar:[2,'≈ 2 m'],
+body:[[60,232],[66,220],[84,212],[106,206],[128,212],[150,222],[196,214],[260,196],[350,186],[420,190],[520,210],[620,240],[730,270],[746,278],[620,262],[530,250],[482,252],[470,282],[468,330],[478,388],[488,396],[430,396],[436,386],[428,332],[410,294],[350,300],[290,298],[266,300],[262,350],[266,390],[272,396],[238,396],[244,388],[244,350],[240,302],[222,284],[196,264],[160,250],[124,246],[90,244],[66,242]],
+far:[tr([[482,252],[470,282],[468,330],[478,388],[488,396],[430,396],[436,386],[428,332],[410,294],[440,262]],20,-4),tr([[266,300],[262,350],[266,390],[272,396],[238,396],[244,388],[244,350],[240,302],[254,290]],18,-3)],
+col:['#5a4a38','#957a55','#d8c49d','#3c3124'],eye:[122,222],
+spots:[[300,210,8,26,10],[340,206,8,28,6],[380,204,8,28,2],[420,208,8,28,-4],[460,216,8,26,-10],[500,226,7,24,-14]],
+fx:`<path d="${cr([[100,212],[122,196],[150,176],[176,156],[188,154],[186,166],[160,188],[134,208],[118,216]])}" fill="#a65a36" stroke="#2b2212" stroke-width="2"/><path d="M60 232Q62 238 66 242Q74 238 76 230Z" fill="#3a3020"/><path d="M62 240Q90 242 120 238" stroke="#2b2212" stroke-width="1.5" fill="none"/>`,
+spine:[[150,226],[196,220],[260,204],[350,194],[420,198],[520,216],[620,246],[728,272]],vr:5,
+ribs:[.2,.42,.03,292],ell:[[430,210,44,18,12],[258,232,12,32,25]],
+bones:[[[430,220],[440,300],[452,350],[460,390]],[[460,394],[434,394]],[[262,252],[258,300],[256,350],[256,390]],[[256,392],[240,394]]],
+skull:[[60,232],[66,220],[84,212],[106,206],[128,212],[150,224],[140,240],[124,246],[90,244],[66,242]],holes:[[122,222,6,6],[80,226,8,5]],
+skx:`<path d="${cr([[100,212],[122,196],[150,176],[176,156],[188,154],[186,166],[160,188],[134,208],[118,216]])}" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><path d="M108 210Q140 188 178 160Q184 162 176 168Q142 194 116 214" stroke="#6b4c34" stroke-width="2.5" fill="none"/>`},
+diplodocus:{ppm:30,bar:[5,'≈ 5 m'],
+body:[[40,214],[52,204],[70,202],[84,210],[120,214],[180,228],[240,248],[300,264],[360,268],[420,264],[462,268],[540,284],[620,302],[700,320],[786,338],[790,342],[700,330],[620,316],[540,306],[494,304],[484,318],[480,360],[484,390],[492,396],[452,396],[456,388],[448,352],[442,324],[400,332],[340,332],[322,330],[318,362],[322,390],[328,396],[292,396],[296,388],[292,358],[286,326],[270,312],[240,284],[180,252],[120,230],[84,224],[48,224]],
+far:[tr([[494,304],[484,318],[480,360],[484,390],[492,396],[452,396],[456,388],[448,352],[442,324],[466,300]],18,-4),tr([[322,330],[318,362],[322,390],[328,396],[292,396],[296,388],[292,358],[286,326],[300,316]],18,-4)],
+col:['#5d5544','#968762','#d6c7a3','#3d372a'],eye:[70,208],
+spots:[[360,282,30,6,0],[420,280,28,6,4],[480,290,24,5,10],[260,272,24,5,24],[200,248,20,4,24]],
+fx:`<path d="M40 216Q56 222 70 220" stroke="#2b2212" stroke-width="1.5" fill="none"/>`,
+spine:[[84,214],[120,220],[180,234],[240,254],[300,272],[360,276],[420,272],[462,276],[540,292],[620,309],[700,326],[784,340]],vr:3.5,vs:.016,
+ribs:[.3,.47,.022,326],ell:[[452,280,30,12,10],[306,288,8,22,25]],
+bones:[[[452,286],[462,340],[466,390]],[[466,392],[450,394]],[[304,300],[306,350],[306,390]],[[306,392],[294,394]]],
+skull:[[40,214],[52,204],[70,202],[84,210],[86,220],[60,226],[44,224]],holes:[[70,208,3,3],[56,210,4,2.5]],
+skx:`<g stroke="#e4d3b2" stroke-width="3" fill="none">${[540,575,610,645,680].map((x,i)=>{const y=298+i*8;return`<path d="M${x} ${y}l2 10M${x+8} ${y+1}l-2 10M${x-8} ${y+12}h24"/>`}).join('')}</g>`}
+};
+
+const fullGeneric=(id)=>{const a=ANAT[id];return svg(`<defs><linearGradient id="${id}-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a.col[0]}"/><stop offset=".55" stop-color="${a.col[1]}"/><stop offset="1" stop-color="${a.col[2]}"/></linearGradient>${shadowDef(id+'-s')}</defs><ellipse cx="420" cy="398" rx="340" ry="18" fill="#000" opacity=".4"/><g filter="url(#${id}-s)">${(a.far||[]).map(p=>`<path d="${cr(p)}" fill="${a.col[3]}"/>`).join('')}${a.bx||''}<path d="${cr(a.body)}" fill="url(#${id}-b)" stroke="#2b2212" stroke-width="2.5"/><g fill="${a.col[3]}" opacity=".45">${a.spots.map(s=>`<ellipse cx="${s[0]}" cy="${s[1]}" rx="${s[2]}" ry="${s[3]}" transform="rotate(${s[4]} ${s[0]} ${s[1]})"/>`).join('')}</g>${a.fx||''}<circle cx="${a.eye[0]}" cy="${a.eye[1]}" r="4" fill="#1a120a"/><circle cx="${a.eye[0]+1.3}" cy="${a.eye[1]-1.3}" r="1.3" fill="#fff"/></g>${txt(780,470,'couleurs et motifs inventés',{a:'end',c:'#f2b24c',s:16,o:1})}${scaleBar(110,450,a.ppm*a.bar[0],a.bar[1])}`)};
+
+const skelGeneric=(id)=>{const a=ANAT[id];const L=mkLine(crSegs(a.spine,false));const verts=[];const vs=a.vs||.025;for(let u=0;u<=1.0001;u+=vs){const{p}=L(Math.min(u,1));verts.push(`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${f(a.vr*(1-u*.45))}"/>`)}const ribs=[];const[r0,r1,rs,by]=a.ribs;for(let u=r0;u<=r1;u+=rs){const{p}=L(u);ribs.push(`<path d="M${f(p[0])} ${f(p[1]+6)}Q${f(p[0]-16)} ${f((p[1]+by)/2)} ${f(p[0]-6)} ${by}"/>`)}return svg(`<path d="${cr(a.body)}" fill="none" stroke="#ecdfc6" stroke-opacity=".22" stroke-width="2" stroke-dasharray="6 7"/><g stroke="#d9c6a2" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".9">${ribs.join('')}</g>${a.ell.map(e=>`<ellipse cx="${e[0]}" cy="${e[1]}" rx="${e[2]}" ry="${e[3]}" fill="#d9c6a2" stroke="#2b1b12" stroke-width="3" transform="rotate(${e[4]} ${e[0]} ${e[1]})"/>`).join('')}<g fill="#e4d3b2" stroke="#2b1b12" stroke-width="2.5">${verts.join('')}</g>${a.bones.map(b=>B(pl(b),9)).join('')}<path d="${cr(a.skull)}" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><g fill="#2b1b12">${a.holes.map(h=>`<ellipse cx="${h[0]}" cy="${h[1]}" rx="${h[2]}" ry="${h[3]}"/>`).join('')}</g>${a.skx||''}${txt(780,40,'pointillés : silhouette reconstituée',{a:'end'})}${scaleBar(110,450,a.ppm*a.bar[0],a.bar[1])}`)};
+
+const fern=(x,s)=>{let d='';for(let i=0;i<7;i++){const y=470-i*9*s;d+=`<path d="M${x} ${y}q${-16*s+i*1.5} -4 ${-22*s+i*2} -14M${x} ${y}q${16*s-i*1.5} -4 ${22*s-i*2} -14"/>`}return`<g stroke="#9bb27a" stroke-width="3" fill="none" stroke-linecap="round"><path d="M${x} 478v${-70*s}"/>${d}</g>`};
+const DIET={low:()=>fern(650,1)+fern(700,.8)+`<g stroke="#b7c48c" stroke-width="3" fill="none"><path d="M745 478v-80"/><path d="M738 440h14M738 420h14M740 460h10"/></g>`,
+high:()=>`<path d="M720 478v-40" stroke="#7a5a3a" stroke-width="6"/>${[0,1,2,3].map(i=>`<path d="M${720-40+i*8} ${450-i*26}L720 ${400-i*26}L${720+40-i*8} ${450-i*26}Z" fill="#6f8a5e"/>`).join('')}`+fern(650,.8),
+meat:()=>`<g transform="translate(690 430) rotate(-20)"><path d="M-50 -8h100v16h-100z" fill="#e4d3b2"/><circle cx="-54" cy="-10" r="12" fill="#e4d3b2"/><circle cx="-54" cy="10" r="12" fill="#e4d3b2"/><circle cx="54" cy="-10" r="12" fill="#e4d3b2"/><circle cx="54" cy="10" r="12" fill="#e4d3b2"/></g>`};
+const contextArt=c=>{const x0=70,W=660,sc=W/186,px=ma=>x0+(252-ma)*sc;const per=[['Trias',252,201,'#8a5a44'],['Jurassique',201,145,'#5f7f86'],['Crétacé',145,66,'#7a8a52']].map(p=>`<rect x="${f(px(p[1]))}" y="80" width="${f(px(p[2])-px(p[1]))}" height="34" fill="${p[3]}" opacity=".85"/>${txt((px(p[1])+px(p[2]))/2,103,p[0],{a:'middle',s:16,w:600,c:'#f6ecd9',o:1})}`).join('');let a=px(c.from),b=px(c.to);if(b-a<10){const m=(a+b)/2;a=m-5;b=m+5}const mid=(a+b)/2;const ppm=Math.min(60,430/c.len[1]);const k=1.75*ppm/90;const step=ppm>=20?1:5;let tk='';for(let m=0;m<=c.len[1]+.01;m+=step)tk+=`<path d="M${f(150+m*ppm)} 400v-6" stroke="#ecdfc6" stroke-width="1.5"/>`;const end=150+c.len[1]*ppm,st=150+c.len[0]*ppm;return svg(`${per}<rect x="${f(a)}" y="70" width="${f(b-a)}" height="54" fill="none" stroke="#14b1c4" stroke-width="4" rx="4"/><path d="M${f(mid)} 124v22" stroke="#14b1c4" stroke-width="3"/>${txt(Math.min(700,Math.max(100,mid)),168,c.ma,{a:'middle',s:16,c:'#7fe3ee',o:1})}${txt(70,140,'252 Ma',{s:14,o:.7})}${txt(730,140,'66 Ma',{s:14,o:.7,a:'end'})}${txt(70,198,c.env,{s:15,o:.8})}<line x1="40" y1="222" x2="760" y2="222" stroke="#ecdfc6" opacity=".15"/>${txt(70,262,'Taille',{s:18,w:700,o:1})}<g transform="translate(110 400) scale(${f(k)})" fill="#ecdfc6"><circle cx="0" cy="-82" r="8"/><path d="M-7 -72h14l4 34h-5l-2 38h-5l-1-30-1 30h-5l-2-38h-5z"/></g>${txt(110,424,'1,75 m',{a:'middle',s:14})}<path d="M150 400H${f(end)}" stroke="#14b1c4" stroke-width="5" stroke-linecap="round"/><path d="M150 388v24M${f(end)} 386v28" stroke="#14b1c4" stroke-width="3"/>${c.len[0]<c.len[1]?`<path d="M${f(st)} 390v20" stroke="#14b1c4" stroke-width="3"/>`:''}<g opacity=".85">${tk}</g>${txt((150+end)/2,376,c.lenLabel,{a:'middle',s:17,c:'#7fe3ee',o:1})}${txt(640,262,'Menu',{s:18,w:700,o:1})}<g transform="translate(0 -52)">${DIET[c.diet]()}<path d="M610 478h170" stroke="#ecdfc6" stroke-width="2" opacity=".5"/>${txt(695,505,c.dietLabel,{a:'middle',s:14})}</g>`)};
+
+const ART={
+stegoTooth(){const A=[400,108],L=[318,336],R=[488,336],cl=[282,196],crr=[522,212];const q=(P0,C,P1,t)=>[0,1].map(k=>(1-t)*(1-t)*P0[k]+2*(1-t)*t*C[k]+t*t*P1[k]);const edge=(P0,C,P1)=>{let d='';const N=8;for(let i=0;i<N;i++){const t0=.08+i*(.86/N),t1=.08+(i+1)*(.86/N),tm=(t0+t1)/2;const a=q(P0,C,P1,t0),b=q(P0,C,P1,t1),m=q(P0,C,P1,tm);const dx=b[0]-a[0],dy=b[1]-a[1],dl=Math.hypot(dx,dy);d+=`L${f(a[0])} ${f(a[1])}Q${f(m[0]+dy/dl*14)} ${f(m[1]-dx/dl*14)} ${f(b[0])} ${f(b[1])}`}return d};const crown=`M${L[0]} ${L[1]}${edge(L,cl,A)}L${A[0]} ${A[1]}${edge(A,crr,R)}L${R[0]} ${R[1]}Q404 352 ${L[0]} ${L[1]}Z`;return svg(`<defs>${boneGrad('st-g')}<linearGradient id="st-r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a48"/><stop offset="1" stop-color="#4a3322"/></linearGradient>${shadowDef('st-s')}</defs><ellipse cx="400" cy="470" rx="150" ry="16" fill="#000" opacity=".35"/><g filter="url(#st-s)"><path d="M334 344Q336 420 388 466Q400 474 412 466Q462 420 470 344Z" fill="url(#st-r)"/><path d="${crown}" fill="url(#st-g)" stroke="#5b4229" stroke-width="2.5"/><path d="M322 330Q404 370 486 330Q470 352 404 358Q338 352 322 330Z" fill="#b29770" opacity=".9"/><path d="M402 128Q396 230 404 340" stroke="#fff6e2" stroke-width="7" fill="none" opacity=".55" stroke-linecap="round"/><path d="M370 170Q360 250 368 330M436 172Q448 250 442 330" stroke="#6f5638" stroke-width="2.5" fill="none" opacity=".55"/></g>${scaleBar(110,440,120,'≈ 5 mm')}`)},
+stegoPlate(){let g='';for(let i=0;i<34;i++){const a=-2.6+i*(2.2/33);const x0=330+i*9,y0=430;const len=150+Math.sin(i*.7)*30+(i>8&&i<26?110:40);const x1=x0+Math.cos(a)*len*.55+(i-17)*3,y1=y0-len;g+=`<path d="M${x0} ${y0}Q${f((x0+x1)/2+Math.sin(i)*12)} ${f((y0+y1)/2)} ${f(x1)} ${f(y1)}" stroke="#6d5233" stroke-width="${f(1.2+(i%3)*.6)}" fill="none" opacity=".55"/>`}const P='M318 432C300 360 312 250 360 180C392 132 430 92 470 96C512 100 532 150 528 214C524 290 500 370 486 432Z';return svg(`<defs><linearGradient id="sp-g" x1="0" y1="1" x2=".6" y2="0"><stop offset="0" stop-color="#8b6a45"/><stop offset=".55" stop-color="#d9c29c"/><stop offset="1" stop-color="#efe2c6"/></linearGradient><clipPath id="sp-c"><path d="${P}"/></clipPath>${shadowDef('sp-s')}</defs><ellipse cx="404" cy="452" rx="170" ry="16" fill="#000" opacity=".35"/><g filter="url(#sp-s)"><path d="${P}" fill="url(#sp-g)" stroke="#4f3a24" stroke-width="3"/><g clip-path="url(#sp-c)">${g}<path d="M318 432C330 410 470 404 486 432Z" fill="#5d4329" opacity=".7"/><path d="M360 180C392 132 430 92 470 96" stroke="#fff4dc" stroke-width="10" fill="none" opacity=".35"/><path d="M498 120l-14 26 10 12-16 18" stroke="#2c1d12" stroke-width="2.5" fill="none" opacity=".6"/></g></g>${scaleBar(600,440,150,'≈ 50 cm')}${txt(160,400,'base ancrée dans la peau')}<path d="M260 404L318 428" stroke="#ecdfc6" stroke-width="1.5" opacity=".7"/>`)},
+stegoSkel(){const verts=[];for(let u=0;u<=.9;u+=.03){const{p,n}=sAt(u);verts.push(`<circle cx="${f(p[0]-n[0]*8)}" cy="${f(p[1]-n[1]*8)}" r="${f(5+Math.sin(u*3)*2.5)}"/>`)}const ribs=[];for(let u=.2;u<=.58;u+=.045){const{p}=sAt(u);ribs.push(`<path d="M${f(p[0])} ${f(p[1]+10)}Q${f(p[0]-14)} ${f(p[1]+60)} ${f(p[0]-4)} ${f(Math.min(292,p[1]+130))}"/>`)}const plt=frontU.map(u=>`<path d="${splate(u,1,6)}"/>`).join('')+backU.map(u=>`<path d="${splate(u,.88,2)}" transform="translate(-8 -4)" opacity=".55"/>`).join('');return svg(`<path d="${SBODY}" fill="none" stroke="#ecdfc6" stroke-opacity=".22" stroke-width="2" stroke-dasharray="6 7"/><g fill="none" stroke="#ecdfc6" stroke-opacity=".7" stroke-width="2.5" stroke-dasharray="5 5">${plt}</g><g fill="#e4d3b2" stroke="#2b1b12" stroke-width="3">${verts.join('')}</g><g stroke="#d9c6a2" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9">${ribs.join('')}</g><ellipse cx="478" cy="200" rx="46" ry="24" fill="#d9c6a2" stroke="#2b1b12" stroke-width="3" transform="rotate(14 478 200)"/><ellipse cx="258" cy="236" rx="20" ry="40" fill="#d9c6a2" stroke="#2b1b12" stroke-width="3" transform="rotate(28 258 236)"/>${B('M480 214L468 306L482 352',10)}${B('M482 356h22',10)}${B('M246 262L250 322L246 354',10)}${B('M246 356h-16',10)}<path d="M74 266Q84 252 112 250Q140 250 148 262Q132 280 96 280Q78 278 74 266Z" fill="#d9c6a2" stroke="#2b1b12" stroke-width="3"/><circle cx="112" cy="260" r="6" fill="#2b1b12"/><path d="M148 262Q170 262 190 248" stroke="#e4d3b2" stroke-width="7" fill="none"/><path d="M690 214Q730 214 760 232" stroke="#ecdfc6" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 6" fill="none"/>${txt(700,268,'bout de queue manquant',{a:'middle'})}${txt(780,40,'pointillés : position reconstituée',{a:'end'})}${scaleBar(110,440,175,'≈ 2 m')}`)},
+stegoFull(){const fp=frontU.map(u=>`<path d="${splate(u,1,6)}" fill="url(#sf-p)" stroke="#3a1d12" stroke-width="2"/>`).join(''),bp=backU.map(u=>`<path d="${splate(u,.9,2)}" fill="#6e3424" stroke="#2a130b" stroke-width="2" transform="translate(-8 -5)"/>`).join('');const sp=SPIKES.map((s,i)=>`<path d="${spike(...s,6)}" fill="${i%2?'#8c7458':'#d8c6a6'}" stroke="#2a1a10" stroke-width="2"/>`).join('');return svg(`<defs><linearGradient id="sf-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7b7a4a"/><stop offset=".55" stop-color="#9b8657"/><stop offset="1" stop-color="#d9c79f"/></linearGradient><linearGradient id="sf-p" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7c3a26"/><stop offset=".7" stop-color="#c0603d"/><stop offset="1" stop-color="#e59a6a"/></linearGradient>${shadowDef('sf-s')}</defs><ellipse cx="420" cy="372" rx="330" ry="20" fill="#000" opacity=".4"/><g filter="url(#sf-s)">${bp}<path d="M488 290L500 352L486 364L530 364L522 300Z" fill="#5c5634"/><path d="M250 300L254 354L244 364L276 364L270 302Z" fill="#5c5634"/><path d="${SBODY}" fill="url(#sf-b)" stroke="#2b2212" stroke-width="2.5"/>${sp}${fp}<path d="M150 278C250 296 380 300 456 294" stroke="#efe2c4" stroke-width="8" opacity=".35" fill="none"/><g fill="#5e5a33" opacity=".55"><ellipse cx="380" cy="215" rx="26" ry="10"/><ellipse cx="300" cy="226" rx="18" ry="8"/><ellipse cx="560" cy="210" rx="22" ry="9"/><ellipse cx="450" cy="235" rx="16" ry="7"/></g><circle cx="102" cy="260" r="4.5" fill="#1a120a"/><circle cx="103.5" cy="258.5" r="1.4" fill="#fff"/><path d="M72 270Q90 274 112 272" stroke="#2b2212" stroke-width="2" fill="none"/></g>${txt(780,470,'couleurs et motifs inventés',{a:'end',c:'#f2b24c',s:16,o:1})}${scaleBar(110,440,175,'≈ 2 m')}`)},
+trexTooth(){const front=[[318,372],[306,270],[350,160],[440,96]],back=[[440,96],[452,170],[476,280],[482,372]];return svg(`<defs>${boneGrad('tt-g','#f4e8cf','#d3bb92','#937650')}<linearGradient id="tt-r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a48"/><stop offset="1" stop-color="#3e2a1b"/></linearGradient>${shadowDef('tt-s')}</defs><ellipse cx="400" cy="500" rx="140" ry="14" fill="#000" opacity=".35"/><g filter="url(#tt-s)"><path d="M322 376Q326 450 372 492L430 492Q474 450 480 376Q400 396 322 376Z" fill="url(#tt-r)"/><path d="M318 372C306 270 350 160 440 96C452 170 476 280 482 372Q400 392 318 372Z" fill="url(#tt-g)" stroke="#5b4229" stroke-width="2.5"/><path d="${ticks(front,26,7)}${ticks(back,26,7)}" stroke="#6b5235" stroke-width="2" fill="none"/><path d="M360 340C352 260 380 180 432 120" stroke="#fff6e2" stroke-width="10" fill="none" opacity=".45" stroke-linecap="round"/><path d="M420 360C424 270 430 190 440 120" stroke="#7a5e3d" stroke-width="2" fill="none" opacity=".5"/></g><g transform="translate(640 200)"><ellipse rx="54" ry="38" fill="#d3bb92" stroke="#5b4229" stroke-width="2.5"/><ellipse rx="30" ry="18" fill="#e9dbbd" opacity=".7"/></g>${txt(640,268,'coupe : épaisse, pas en lame',{a:'middle'})}${scaleBar(110,470,130,'≈ 10 cm')}`)},
+trexArm(){return svg(`${shadowDef('ta-s')}<ellipse cx="420" cy="480" rx="230" ry="14" fill="#000" opacity=".35"/><g filter="url(#ta-s)">${B('M240 120Q300 210 364 288',24)}${B('M372 296L452 354',13)}${B('M364 308L444 368',11)}${B('M460 362L504 378',11)}${B('M452 374L490 402',11)}${B('M446 382L458 396',8)}${B('M510 380L544 392',9)}${B('M494 406L510 436',9)}<path d="M542 384Q588 392 600 440Q578 412 542 400Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><path d="M502 432Q530 456 522 504Q510 472 494 446Z" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/><circle cx="240" cy="120" r="22" fill="#e4d3b2" stroke="#2b1b12" stroke-width="3"/></g>${scaleBar(110,470,140,'≈ 30 cm')}`)},
+triTooth(){const tooth=(dx,s,o)=>`<g transform="translate(${400+dx} 280) scale(${s}) translate(-400 -280)" opacity="${o}"><path d="M366 250Q360 330 330 440L362 444Q384 340 400 300Q416 340 438 444L470 440Q440 330 434 250Z" fill="url(#ct-r)" stroke="#3e2a1b" stroke-width="2"/><path d="M360 120L440 120Q456 180 436 252L364 252Q344 180 360 120Z" fill="url(#ct-g)" stroke="#5b4229" stroke-width="2.5"/><path d="M400 126L400 248" stroke="#fff6e2" stroke-width="6" opacity=".55"/><path d="M380 130L376 246M420 130L424 246" stroke="#6f5638" stroke-width="2" opacity=".5"/></g>`;return svg(`<defs>${boneGrad('ct-g')}<linearGradient id="ct-r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a48"/><stop offset="1" stop-color="#3e2a1b"/></linearGradient>${shadowDef('ct-s')}</defs><ellipse cx="400" cy="470" rx="200" ry="14" fill="#000" opacity=".35"/>${tooth(-150,.82,.25)}${tooth(150,.82,.25)}<g filter="url(#ct-s)">${tooth(0,1,1)}</g>${txt(620,120,'dents voisines de la batterie',{a:'middle',o:.6})}${scaleBar(110,470,90,'≈ 1 cm')}`)},
+triHorn(){let g='';for(let i=0;i<9;i++){const o=(i-4)*9;g+=`<path d="M${200+o} ${420-o*.4}C${300+o*.8} ${320+o*.3} ${420+o*.4} ${210+o*.2} ${590} ${108}" stroke="#6d5233" stroke-width="${1.4+(i%2)}" fill="none" opacity=".55"/>`}return svg(`<defs>${boneGrad('th-g','#f1e3c6','#cdb38a','#7f6444')}<clipPath id="th-c"><path d="M170 420C200 300 320 170 600 96C620 92 628 104 612 112C380 230 300 330 290 440Z"/></clipPath>${shadowDef('th-s')}</defs><ellipse cx="380" cy="478" rx="260" ry="14" fill="#000" opacity=".35"/><g filter="url(#th-s)"><path d="M110 470L140 400L250 392L340 420L360 476Z" fill="#6e5236" stroke="#3a2818" stroke-width="2.5"/><path d="M150 430Q200 420 230 440Q260 455 320 450" stroke="#3a2818" stroke-width="2" fill="none"/><path d="M170 420C200 300 320 170 600 96C620 92 628 104 612 112C380 230 300 330 290 440Z" fill="url(#th-g)" stroke="#5b4229" stroke-width="2.5"/><g clip-path="url(#th-c)">${g}</g><path d="M230 360C300 270 400 190 560 120" stroke="#fff6e2" stroke-width="8" fill="none" opacity=".35" stroke-linecap="round"/></g>${scaleBar(560,440,155,'≈ 30 cm')}`)},
+ankOsteo(){const r=rng(7);let pits='';for(let i=0;i<160;i++){const a=r()*Math.PI*2,d=Math.sqrt(r());const x=400+Math.cos(a)*d*190,y=262+Math.sin(a)*d*122;pits+=`<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(1.5+r()*3)}" ry="${f(1+r()*2)}"/>`}return svg(`<defs><radialGradient id="ao-g" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#eadbbd"/><stop offset=".7" stop-color="#bfa47a"/><stop offset="1" stop-color="#7f6444"/></radialGradient>${shadowDef('ao-s')}</defs><ellipse cx="400" cy="440" rx="220" ry="18" fill="#000" opacity=".35"/><g filter="url(#ao-s)" transform="rotate(-8 400 262)"><ellipse cx="400" cy="262" rx="212" ry="140" fill="url(#ao-g)" stroke="#5b4229" stroke-width="3"/><g fill="#6b5235" opacity=".55">${pits}</g><path d="M220 280Q400 226 590 246" stroke="#fff4dc" stroke-width="14" fill="none" opacity=".5" stroke-linecap="round"/><path d="M222 292Q400 240 590 258" stroke="#6b5235" stroke-width="3" fill="none" opacity=".6"/></g>${txt(400,90,'vue de dessus · carène centrale',{a:'middle'})}${scaleBar(110,470,140,'≈ 10 cm')}`)},
+ankClub(){const r=rng(11);let pits='';for(let i=0;i<120;i++){const x=440+r()*330,y=150+r()*240;pits+=`<circle cx="${f(x)}" cy="${f(y)}" r="${f(1+r()*2.4)}"/>`}return svg(`<defs><radialGradient id="ac-g" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#eadbbd"/><stop offset=".7" stop-color="#bfa47a"/><stop offset="1" stop-color="#7f6444"/></radialGradient><clipPath id="ac-c"><ellipse cx="560" cy="270" rx="160" ry="120"/><ellipse cx="530" cy="196" rx="124" ry="72"/><ellipse cx="530" cy="344" rx="124" ry="72"/></clipPath>${shadowDef('ac-s')}</defs><ellipse cx="420" cy="460" rx="330" ry="16" fill="#000" opacity=".35"/><g filter="url(#ac-s)"><path d="M40 252L460 232L460 308L40 288Z" fill="#cdb48e" stroke="#5b4229" stroke-width="2.5"/><g stroke="#6d5233" stroke-width="2" opacity=".7">${[0,1,2,3,4,5,6,7].map(i=>`<path d="M${80+i*50} ${250-i*2}v${40+i*4}"/>`).join('')}</g><g stroke="#8a6c48" stroke-width="2.5" fill="none">${[0,1,2,3,4].map(i=>`<path d="M${40+i*30} ${258+i*7}L${470} ${244+i*12}"/>`).join('')}</g><ellipse cx="560" cy="270" rx="160" ry="120" fill="url(#ac-g)" stroke="#5b4229" stroke-width="3"/><ellipse cx="530" cy="196" rx="124" ry="72" fill="url(#ac-g)" stroke="#5b4229" stroke-width="3" transform="rotate(-8 530 196)"/><ellipse cx="530" cy="344" rx="124" ry="72" fill="url(#ac-g)" stroke="#5b4229" stroke-width="3" transform="rotate(8 530 344)"/><ellipse cx="714" cy="270" rx="38" ry="46" fill="url(#ac-g)" stroke="#5b4229" stroke-width="3"/><g fill="#6b5235" opacity=".5" clip-path="url(#ac-c)">${pits}</g></g>${txt(250,206,'tendons ossifiés',{a:'middle'})}${txt(400,90,'vue de dessus',{a:'middle'})}${scaleBar(110,470,150,'≈ 30 cm')}`)},
+paraTeeth(){let t='';for(let i=0;i<14;i++){for(let j=0;j<3;j++){const x=150+i*38,y=200+j*66+(i%2)*30;t+=`<path d="M${x} ${y-32}L${x+17} ${y}L${x} ${y+32}L${x-17} ${y}Z" fill="${j?'#d9c6a2':'#eadbbd'}" stroke="#4a3420" stroke-width="2"/><path d="M${x} ${y-28}V${y+28}" stroke="#7a5e3d" stroke-width="1.5" opacity=".6"/>`}}return svg(`<defs><clipPath id="pt-c"><rect x="110" y="150" width="580" height="270" rx="26"/></clipPath>${shadowDef('pt-s')}</defs><ellipse cx="400" cy="450" rx="300" ry="14" fill="#000" opacity=".35"/><g filter="url(#pt-s)"><rect x="110" y="150" width="580" height="270" rx="26" fill="#6e5236" stroke="#3a2818" stroke-width="3"/><g clip-path="url(#pt-c)">${t}</g><path d="M110 168H690" stroke="#f4ead2" stroke-width="5" opacity=".6"/></g>${txt(400,128,'surface d\'usure : une râpe continue',{a:'middle'})}${scaleBar(110,480,80,'≈ 2 cm')}`)},
+paraCrest(){const out=[[140,430],[300,322],[480,212],[640,124],[690,104],[714,118],[700,148],[530,250],[350,356],[190,466]];return svg(`<defs>${boneGrad('pc-g','#efe1c3','#cdb38a','#8f744f')}${shadowDef('pc-s')}</defs><ellipse cx="420" cy="490" rx="300" ry="14" fill="#000" opacity=".35"/><g filter="url(#pc-s)"><path d="M90 440L150 410L220 470L130 500Z" fill="#6e5236" stroke="#3a2818" stroke-width="2.5"/><path d="${cr(out)}" fill="url(#pc-g)" stroke="#5b4229" stroke-width="3"/><path d="M168 438C320 328 490 220 664 128Q696 116 682 142C510 236 340 346 190 452" stroke="#3a2818" stroke-width="7" fill="none" opacity=".75"/><path d="M200 400C340 300 480 214 640 124" stroke="#fff6e2" stroke-width="6" fill="none" opacity=".4"/></g>${txt(560,330,'conduit interne en boucle',{a:'middle'})}<path d="M600 312L662 150" stroke="#ecdfc6" stroke-width="1.5" opacity=".6"/>${scaleBar(520,470,190,'≈ 30 cm')}`)},
+diploTeeth(){let t='';for(let i=0;i<9;i++){const x=150+i*22;t+=`<rect x="${x}" y="238" width="11" height="${70-i*3}" rx="5.5" fill="#efe2c6" stroke="#4a3420" stroke-width="2" transform="rotate(-8 ${x} 238)"/>`}return svg(`<defs><linearGradient id="dt-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8996d"/><stop offset="1" stop-color="#6e5236"/></linearGradient>${shadowDef('dt-s')}</defs><ellipse cx="400" cy="440" rx="300" ry="14" fill="#000" opacity=".35"/><g filter="url(#dt-s)">${t}<path d="M110 200C110 150 190 120 300 124L700 140L700 250L300 250C200 250 110 240 110 200Z" fill="url(#dt-g)" stroke="#3a2818" stroke-width="3"/><path d="M300 250L700 250" stroke="#3a2818" stroke-width="2" opacity=".5"/><rect x="430" y="380" width="10" height="66" rx="5" fill="#efe2c6" stroke="#4a3420" stroke-width="2" transform="rotate(70 430 380)"/><rect x="520" y="400" width="10" height="60" rx="5" fill="#efe2c6" stroke="#4a3420" stroke-width="2" transform="rotate(-62 520 400)"/></g>${txt(560,200,'arrière de la mâchoire : sans dents',{a:'middle',c:'#f6ecd9'})}${scaleBar(110,480,90,'≈ 5 cm')}`)},
+diploChevron(){return svg(`${shadowDef('dc-s')}<ellipse cx="400" cy="450" rx="270" ry="14" fill="#000" opacity=".35"/><g opacity=".45"><rect x="250" y="80" width="300" height="130" rx="40" fill="#cdb48e" stroke="#5b4229" stroke-width="3"/></g>${txt(400,150,'vertèbre de la queue',{a:'middle',c:'#2b1b12',o:.9})}<g filter="url(#dc-s)">${B('M336 214Q356 270 384 330',18)}${B('M464 214Q444 270 416 330',18)}${B('M180 352Q400 318 620 352',22)}<path d="M200 348Q400 318 600 348" stroke="#fff6e2" stroke-width="4" fill="none" opacity=".5"/></g>${txt(180,404,'vers la tête',{a:'middle'})}${txt(620,404,'vers le bout de la queue',{a:'middle'})}${scaleBar(110,480,120,'≈ 10 cm')}`)}
+};
+
+const draw=(round,clue)=>clue.art==='context'?contextArt(round.ctx):clue.art==='skeleton'?skelGeneric(round.answer):clue.art==='full'?fullGeneric(round.answer):ART[clue.art]();
+const fullArt=round=>round.answer==='stegosaurus'?ART.stegoFull():fullGeneric(round.answer);
+
+const ROUNDS=[
+{answer:'stegosaurus',level:'celebre',
+ctx:{from:155,to:145,ma:'≈ 155–145 Ma',env:'Milieu : plaines inondables aux saisons sèches marquées',len:[7,9],lenLabel:'7 à 9 m pour un grand adulte',diet:'low',dietLabel:'fougères, prêles, cycadales…'},
+clues:[
+{art:'stegoTooth',title:'Une dent minuscule',cert:'fossile',text:"Moins d'un centimètre, en forme de feuille, bordée de petites denticules arrondies et renflée à la base. Une dent faite pour hacher des végétaux, pas pour trancher de la chair."},
+{art:'stegoPlate',title:'Une plaque osseuse',cert:'fossile',text:"Large, mince et haute de plus d'un demi-mètre, sillonnée de canaux où passaient des vaisseaux sanguins. Elle n'était pas fixée au squelette mais ancrée dans la peau."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Jurassique supérieur, il y a environ 155 à 145 millions d'années. Les plus grands adultes approchaient 9 m. Il broutait surtout la végétation basse."},
+{art:'stegoSkel',title:'Le squelette presque complet',cert:'reconst',text:"Petite tête basse, membres avant courts, hanches très hautes. Les plaques, retrouvées détachées, sont replacées en deux rangées alternées. Le bout de la queue manque encore."},
+{art:'stegoFull',title:'La reconstitution',cert:'hypothese',text:"Silhouette fidèle au squelette, et le bout de la queue enfin visible. Les couleurs et motifs sont inventés : aucun pigment n'est connu pour cet animal."}],
+sheet:{latin:'Stegosaurus stenops',meaning:"« Lézard à toit » : son descripteur, O. C. Marsh, croyait d'abord que les plaques étaient couchées sur le dos comme des tuiles.",
+facts:[['Période','Jurassique supérieur, ≈ 155–145 Ma'],['Lieu','Ouest des États-Unis (formation de Morrison)'],['Taille',"Jusqu'à ≈ 9 m"],['Régime','Herbivore, végétation basse surtout']],
+why:[['La dent',"Une dent en feuille, à denticules : un herbivore ornithischien. Exit les carnivores et les sauropodes, aux dents en crayon ou en cuillère."],['La plaque',"Une haute plaque dermique vascularisée oriente vers les stégosaures. Les ankylosaures portent des plaques plates."],['Le contexte',"Jurassique supérieur et jusqu'à 9 m : Kentrosaurus et Hesperosaurus sont plus petits, Huayangosaurus plus ancien."],['Le squelette',"Des plaques très larges, maximales au-dessus des hanches, en deux rangées alternées : la signature de Stegosaurus."],['La queue',"Quatre épines caudales, surnommées « thagomizer » d'après un dessin humoristique de 1982."]],
+unknown:[['hypothese','Ses couleurs',"Aucun pigment fossile n'est connu. Les teintes de la reconstitution sont inventées."],['hypothese','Son cri',"Aucun son ne fossilise. Le jeu n'attribue aucun cri à cet animal."],['estimation','Le rôle des plaques',"Débattu : reconnaissance entre congénères, dissuasion des prédateurs, peut-être régulation de la température."]],
+confusions:{kentrosaurus:"Contemporain, mais africain (Tanzanie), plus petit (environ 4,5 à 5 m), avec de longues épines sur toute la moitié arrière du corps.",hesperosaurus:"Même formation de Morrison, mais plus petit, avec des plaques plus longues que hautes. Parfois classé comme Stegosaurus mjosi.",ankylosaurus:"Crétacé supérieur : armure de plaques plates et massue au bout de la queue, aucune haute plaque dressée.",huayangosaurus:"Stégosaure plus ancien (Jurassique moyen, Chine) et petit, environ 4 m."},
+fun:"Son cerveau était à peu près de la taille d'une prune, minuscule par rapport à son corps.",
+sources:[['Natural History Museum, Dino Directory : Stegosaurus','https://www.nhm.ac.uk/discover/dino-directory/stegosaurus.html'],['Maidment, Brassey & Barrett (2015), PLOS ONE, squelette de « Sophie »','https://doi.org/10.1371/journal.pone.0138352'],['Woodruff, Trexler & Maidment (2019), Acta Palaeontologica Polonica','https://doi.org/10.4202/app.00585.2018'],['Natural History Museum, Dino Directory : Kentrosaurus','https://www.nhm.ac.uk/discover/dino-directory/kentrosaurus.html']]}},
+{answer:'tyrannosaurus',level:'celebre',
+ctx:{from:68,to:66,ma:'≈ 68–66 Ma',env:'Milieu : plaines côtières boisées, juste avant la grande extinction',len:[12,12.4],lenLabel:"jusqu'à ≈ 12 m",diet:'meat',dietLabel:'grands herbivores, charognes'},
+clues:[
+{art:'trexTooth',title:'Une dent comme une banane',cert:'fossile',text:"Jusqu'à 30 cm racine comprise, épaisse plutôt qu'aplatie, légèrement recourbée, avec de fines dentelures sur ses deux arêtes. Une dent capable d'encaisser le contact avec l'os."},
+{art:'trexArm',title:'Un bras minuscule',cert:'fossile',text:"Moins d'un mètre de long, robuste pour sa taille, terminé par seulement deux doigts griffus. L'animal entier était plus de dix fois plus long."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Crétacé supérieur, il y a environ 68 à 66 millions d'années. Jusqu'à 12 m de long environ et plusieurs tonnes. Un grand carnivore, au sommet de la chaîne alimentaire."},
+{art:'skeleton',title:'Le squelette',cert:'fossile',text:"Crâne massif et large à l'arrière, cou court, longues pattes arrière à trois doigts au sol, bras atrophiés. Plus de 30 spécimens sont connus, dont certains presque complets."},
+{art:'full',title:'La reconstitution',cert:'hypothese',text:"Silhouette d'après le squelette. Les couleurs sont inventées ; quelques empreintes de peau montrent de petites écailles."}],
+sheet:{latin:'Tyrannosaurus rex',meaning:'« Roi des lézards tyrans ».',
+facts:[['Période','Crétacé supérieur, ≈ 68–66 Ma'],['Lieu',"Ouest de l'Amérique du Nord"],['Taille',"Jusqu'à ≈ 12 m"],['Régime','Carnivore']],
+why:[['La dent',"Grosse, épaisse et dentelée : un grand théropode carnivore. Les dents d'Allosaurus ou de Giganotosaurus sont des lames plus fines."],['Le bras',"Deux doigts seulement : la marque des tyrannosauridés. Allosaurus et Giganotosaurus en ont trois."],['Le contexte',"68 à 66 Ma : Giganotosaurus (≈ 98 Ma) est bien trop ancien. Reste Tarbosaurus, cousin asiatique un peu plus petit."],['Le squelette',"Crâne très large à l'arrière, aux yeux tournés vers l'avant : plus massif que celui de Tarbosaurus."],['La reconstitution',"Le plus massif des tyrannosauridés connus."]],
+unknown:[['hypothese','Ses couleurs',"Aucune couleur n'est connue. Les teintes de la reconstitution sont inventées."],['hypothese','Son cri',"Aucun son ne fossilise. Le rugissement des films est une invention."],['estimation','Écailles ou duvet ?',"Quelques empreintes montrent de petites écailles ; la présence de duvet ailleurs sur le corps reste discutée."],['estimation','Son poids',"Les estimations vont d'environ 8 à plus de 18 tonnes selon les méthodes et les spécimens."]],
+confusions:{tarbosaurus:"Très proche cousin de Mongolie, un peu plus ancien et plus petit, au crâne plus étroit.",giganotosaurus:"Géant d'Argentine, environ 30 millions d'années plus ancien, avec trois doigts et des dents en lame.",allosaurus:"Jurassique supérieur, trois doigts à la main, dents en lame."},
+fun:"On connaît plus de 30 spécimens de T. rex, dont certains presque complets.",
+sources:[['Natural History Museum, Dino Directory : Tyrannosaurus','https://www.nhm.ac.uk/discover/dino-directory/tyrannosaurus.html'],['Encyclopædia Britannica : Tyrannosaurus','https://www.britannica.com/animal/Tyrannosaurus']]}},
+{answer:'triceratops',level:'celebre',
+ctx:{from:68,to:66,ma:'≈ 68–66 Ma',env:'Milieu : plaines côtières boisées de la fin du Crétacé',len:[8,9],lenLabel:'≈ 8 à 9 m',diet:'low',dietLabel:'plantes basses et coriaces'},
+clues:[
+{art:'triTooth',title:'Une dent à racine double',cert:'fossile',text:"Étroite, avec une crête verticale, et une racine qui se divise en deux. Elle s'empilait avec des dizaines d'autres en batterie, pour cisailler des végétaux coriaces."},
+{art:'triHorn',title:'Un cône osseux',cert:'fossile',text:"Long d'environ un mètre, sillonné de vaisseaux sanguins. C'est le noyau d'une corne : du vivant de l'animal, il était recouvert de kératine."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Crétacé supérieur, il y a environ 68 à 66 millions d'années. Environ 8 à 9 m de long et plusieurs tonnes. Herbivore, il broutait la végétation basse."},
+{art:'skeleton',title:'Le squelette',cert:'fossile',text:"Un crâne immense, près d'un tiers de la longueur du corps, trois cornes et une collerette courte et pleine, sans ouverture."},
+{art:'full',title:'La reconstitution',cert:'hypothese',text:"Silhouette d'après le squelette. Couleurs et motifs de la collerette sont inventés."}],
+sheet:{latin:'Triceratops horridus',meaning:'« Visage à trois cornes ».',
+facts:[['Période','Crétacé supérieur, ≈ 68–66 Ma'],['Lieu',"Ouest de l'Amérique du Nord"],['Taille','≈ 8 à 9 m'],['Régime','Herbivore']],
+why:[['La dent',"Racine double et batterie dentaire : un cératopsidé. Les hadrosaures ont aussi des batteries, mais une seule racine par dent."],['La corne',"Un noyau de corne d'un mètre au-dessus de l'œil : un cératopsidé à longues cornes frontales, comme Triceratops ou Torosaurus. Styracosaurus a de petites cornes frontales."],['Le contexte',"68 à 66 Ma élimine Styracosaurus (≈ 75 Ma) ; Torosaurus reste possible."],['Le squelette',"Collerette courte et pleine : Triceratops. Celle de Torosaurus est longue et percée de deux grandes ouvertures."],['La reconstitution',"Trois cornes, un bec et une collerette : le portrait complet."]],
+unknown:[['hypothese','Ses couleurs',"Aucune couleur n'est connue. Les motifs de la collerette sont inventés."],['hypothese','Son cri',"Aucun son ne fossilise."],['estimation','Triceratops et Torosaurus, un seul animal ?',"Une hypothèse de 2010 voit en Torosaurus l'adulte âgé de Triceratops ; d'autres études la contestent. Le débat continue."]],
+confusions:{torosaurus:"Contemporain, mais à collerette longue et percée de deux grandes ouvertures.",styracosaurus:"Plus ancien (≈ 75 Ma), avec une longue corne nasale et une collerette hérissée d'épines.",ankylosaurus:"Contemporain, mais cuirassé, bas sur pattes et sans cornes frontales."},
+fun:"Une corne de Triceratops porte des traces de morsure de T. rex… cicatrisées : l'animal a survécu.",
+sources:[['Natural History Museum, Dino Directory : Triceratops','https://www.nhm.ac.uk/discover/dino-directory/triceratops.html'],['Longrich & Field (2012), PLOS ONE : Torosaurus n\'est pas Triceratops','https://pmc.ncbi.nlm.nih.gov/articles/PMC3290593'],['Encyclopædia Britannica : Triceratops','https://www.britannica.com/animal/Triceratops']]}},
+{answer:'ankylosaurus',level:'inter',
+ctx:{from:68,to:66,ma:'≈ 68–66 Ma',env:'Milieu : plaines côtières de la fin du Crétacé',len:[6,8],lenLabel:'≈ 6 à 8 m',diet:'low',dietLabel:'plantes basses'},
+clues:[
+{art:'ankOsteo',title:'Une plaque de blindage',cert:'fossile',text:"Ovale, plate, à surface piquetée, avec une petite carène au centre. Elle était incrustée dans la peau, parmi des centaines d'autres."},
+{art:'ankClub',title:'Le bout de la queue',cert:'fossile',text:"De grosses masses osseuses soudées, au bout d'une queue raidie par des tendons ossifiés : une massue."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Crétacé supérieur, il y a environ 68 à 66 millions d'années. Environ 6 à 8 m de long, bas sur pattes et très large. Herbivore, il broutait au ras du sol."},
+{art:'skeleton',title:'Le squelette',cert:'reconst',text:"Crâne large aux coins armés de petites cornes, corps bas et large. Le squelette n'est connu qu'en partie : le reste est complété d'après des ankylosaures proches."},
+{art:'full',title:'La reconstitution',cert:'hypothese',text:"Silhouette d'après le squelette et ses proches parents. La disposition exacte des plaques et les couleurs sont des hypothèses."}],
+sheet:{latin:'Ankylosaurus magniventris',meaning:"« Lézard soudé » : de nombreux os du crâne et du corps sont fusionnés.",
+facts:[['Période','Crétacé supérieur, ≈ 68–66 Ma'],['Lieu',"Ouest de l'Amérique du Nord"],['Taille','≈ 6 à 8 m'],['Régime','Herbivore, végétation basse']],
+why:[['La plaque',"Un ostéoderme plat et carené : un dinosaure cuirassé. Les stégosaures portent de hautes plaques dressées, pas un pavage."],['La massue',"Une massue caudale : les ankylosauridés, comme Ankylosaurus ou Euoplocephalus. Les nodosauridés n'en ont pas."],['Le contexte',"68 à 66 Ma et jusqu'à 8 m : Euoplocephalus est plus ancien (≈ 76 Ma) et plus petit."],['Le squelette',"Le plus grand ankylosauridé connu, au crâne plus large que long."],['La reconstitution',"Blindage, cornes de la tête et massue : le char d'assaut du Crétacé."]],
+unknown:[['hypothese','Ses couleurs',"Aucune couleur n'est connue."],['estimation','Le rôle de la massue',"Défense contre les prédateurs ou combats entre congénères ? Des blessures chez un proche parent plaident pour les combats."],['estimation',"La disposition de l'armure","Faute de squelette complet, la répartition des plaques est reconstituée d'après d'autres ankylosaures."]],
+confusions:{euoplocephalus:"Ankylosaure à massue lui aussi, mais plus ancien (≈ 76 Ma) et plus petit.",stegosaurus:"Jurassique supérieur, avec de hautes plaques dressées et des épines au bout de la queue, pas de massue.",triceratops:"Contemporain, mais haut sur pattes, avec des cornes et une collerette."},
+fun:"Malgré sa célébrité, Ankylosaurus est connu par beaucoup moins de fossiles que plusieurs de ses proches.",
+sources:[['Arbour & Mallon (2017), FACETS : anatomie d\'Ankylosaurus magniventris','https://doi.org/10.1139/facets-2017-0063'],['Natural History Museum (2022) : les massues servaient-elles aux combats ?','https://www.nhm.ac.uk/discover/news/2022/december/ankylosaurs-may-have-used-tail-clubs-fight-each-other-not-predators.html'],['Natural History Museum, Dino Directory : Ankylosaurus','https://www.nhm.ac.uk/discover/dino-directory/ankylosaurus.html']]}},
+{answer:'parasaurolophus',level:'inter',
+ctx:{from:76.5,to:73,ma:'≈ 76,5–73 Ma',env:'Milieu : plaines côtières et deltas',len:[7.5,9.5],lenLabel:'≈ 7,5 à 9,5 m',diet:'high',dietLabel:'feuilles, aiguilles de conifères'},
+clues:[
+{art:'paraTeeth',title:'Une râpe dentaire',cert:'fossile',text:"Des dizaines de petites dents en losange serrées en colonnes, avec des dents de remplacement prêtes en dessous. Chaque dent n'a qu'une racine."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Crétacé supérieur, il y a environ 76,5 à 73 millions d'années. Environ 7,5 à 9,5 m de long. Herbivore, capable de marcher sur deux ou sur quatre pattes."},
+{art:'paraCrest',title:'Un tube osseux',cert:'fossile',text:"Creux, recourbé vers l'arrière, dépassant d'environ un mètre au-dessus du crâne. À l'intérieur, un conduit part des narines, fait une boucle et revient."},
+{art:'skeleton',title:'Le squelette',cert:'fossile',text:"Bec de canard, pattes arrière puissantes, longue queue. La crête prolonge le crâne vers l'arrière."},
+{art:'full',title:'La reconstitution',cert:'hypothese',text:"Silhouette d'après le squelette. Couleurs et rayures sont inventées."}],
+sheet:{latin:'Parasaurolophus walkeri',meaning:"« Proche de Saurolophus », un autre dinosaure à bec de canard.",
+facts:[['Période','Crétacé supérieur, ≈ 76,5–73 Ma'],['Lieu',"Ouest de l'Amérique du Nord"],['Taille','≈ 7,5 à 9,5 m'],['Régime','Herbivore']],
+why:[['Les dents',"Une batterie dentaire à racines simples : un hadrosaure, dinosaure à bec de canard."],['Le contexte',"76,5 à 73 Ma : Edmontosaurus, plus récent pour l'essentiel, devient peu probable. Restent les hadrosaures à crête de la même époque."],['La crête',"Un long tube creux, ni casque (Corythosaurus) ni hachette (Lambeosaurus) : Parasaurolophus."],['Le squelette',"Le crâne et sa crête tubulaire confirment."],['La reconstitution',"Une crête qui servait sans doute à se reconnaître, et peut-être à produire des sons."]],
+unknown:[['hypothese','Ses couleurs',"Aucune couleur n'est connue."],['estimation','Le son de sa crête',"Dans les années 1990, des modélisations de la crête ont suggéré des sons graves et résonants. C'est une hypothèse argumentée, pas un enregistrement.",true],['estimation','Le rôle de la crête',"Reconnaissance, communication sonore, régulation de la température : sans doute plusieurs fonctions à la fois."]],
+confusions:{corythosaurus:"Hadrosaure contemporain, mais à crête en forme de casque arrondi.",lambeosaurus:"Hadrosaure contemporain, à crête en forme de hachette.",edmontosaurus:"Hadrosaure plus récent, sans crête osseuse."},
+fun:"Les trois espèces connues n'ont pas la même crête : celle de P. cyrtocristatus est plus courte et plus recourbée.",
+sources:[['Natural History Museum, Dino Directory : Parasaurolophus','https://www.nhm.ac.uk/discover/dino-directory/parasaurolophus.html'],['Parks (1922), description originale de Parasaurolophus walkeri','https://archive.org/details/cu31924004594580']]}},
+{answer:'diplodocus',level:'inter',
+ctx:{from:154,to:150,ma:'≈ 154–150 Ma',env:'Milieu : plaines inondables aux saisons sèches marquées',len:[24,26],lenLabel:'≈ 24 à 26 m',diet:'high',dietLabel:'conifères, fougères'},
+clues:[
+{art:'diploTeeth',title:'Des dents en crayon',cert:'fossile',text:"Fines et cylindriques, regroupées tout à l'avant d'une mâchoire étroite. Elles arrachaient probablement les feuilles sans les mâcher."},
+{art:'diploChevron',title:'Un os sous la queue',cert:'fossile',text:"Un petit os en Y placé sous une vertèbre de la queue, prolongé vers l'avant et vers l'arrière comme un patin à double poutre."},
+{art:'context',title:'Son monde',cert:'estimation',text:"Jurassique supérieur, il y a environ 154 à 150 millions d'années. Environ 24 à 26 m de long, mais léger pour sa taille : une douzaine de tonnes. Herbivore."},
+{art:'skeleton',title:'Le squelette',cert:'fossile',text:"Tête minuscule, très long cou, queue en fouet encore plus longue. Son squelette compte près de 300 os."},
+{art:'full',title:'La reconstitution',cert:'hypothese',text:"Silhouette d'après le squelette. La position du cou est discutée et les couleurs sont inventées."}],
+sheet:{latin:'Diplodocus carnegii',meaning:"« Double poutre », d'après les chevrons en patin sous sa queue.",
+facts:[['Période','Jurassique supérieur, ≈ 154–150 Ma'],['Lieu','Ouest des États-Unis (formation de Morrison)'],['Taille','≈ 24 à 26 m'],['Régime','Herbivore']],
+why:[['Les dents',"Des dents en crayon à l'avant du museau : un sauropode diplodocoïde. Brachiosaurus a des dents en cuillère."],['Le chevron',"Les chevrons à double poutre ont donné son nom à Diplodocus, mais on en a trouvé depuis chez d'autres diplodocidés."],['Le contexte',"Jurassique supérieur, 25 m mais léger : un diplodocidé élancé de Morrison."],['Le squelette',"Cou fin et queue en fouet : plus gracile qu'Apatosaurus, au cou moins long que celui de Barosaurus."],['La reconstitution',"Une silhouette tout en longueur."]],
+unknown:[['hypothese','Ses couleurs',"Aucune couleur n'est connue."],['hypothese','Son cri',"Aucun son ne fossilise."],['estimation','La posture du cou',"Port horizontal ou relevé ? Les reconstitutions divergent encore."]],
+confusions:{apatosaurus:"Même époque et même région, mais bien plus massif, au cou épais.",barosaurus:"Même époque et même région, au cou encore plus long et à la queue plus courte.",brachiosaurus:"Même formation, mais dents en cuillère et pattes avant plus hautes que les pattes arrière."},
+fun:"Des moulages du squelette de « Dippy » ont été offerts à plusieurs musées dans le monde, dont celui de Paris.",
+sources:[['National Park Service, Dinosaur National Monument : Diplodocus','https://www.nps.gov/dino/learn/nature/diplodocus-longus.htm'],['Natural History Museum, Dino Directory : Diplodocus','https://www.nhm.ac.uk/discover/dino-directory/diplodocus.html']]}}
+];
+
+const $=id=>document.getElementById(id);
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const lev=(a,b)=>{const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]};
+const byId=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+let mode='libre',level='tous',queue=[],qi=0,results=[];
+let round,step=0,view=0,over=false,tried=[],sel=null,hi=-1,list=[];
+
+$('gridSvg').innerHTML=[1,2,3,4,5,6,7].map(i=>`<line x1="${i*100}" y1="0" x2="${i*100}" y2="540" stroke="#ecdfc6" stroke-opacity=".08"/>`).join('')+[1,2,3,4].map(i=>`<line x1="0" y1="${i*108}" x2="800" y2="${i*108}" stroke="#ecdfc6" stroke-opacity=".08"/>`).join('');
+
+const zoomable=$('zoomable'),vp=$('viewport');
+let Z={s:1,x:0,y:0};
+const applyZ=()=>{const r=vp.getBoundingClientRect();Z.s=Math.min(5,Math.max(1,Z.s));Z.x=Math.min(0,Math.max(r.width*(1-Z.s),Z.x));Z.y=Math.min(0,Math.max(r.height*(1-Z.s),Z.y));zoomable.style.transform=`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;vp.classList.toggle('zoomed',Z.s>1.01);$('zoomTag').textContent=Z.s>1.01?`Zoom ×${Z.s.toFixed(1)} · glisse pour explorer`:'Pince ou molette pour zoomer'};
+const zoomAt=(k,cx,cy)=>{const ns=Math.min(5,Math.max(1,Z.s*k));Z.x=cx-(cx-Z.x)*(ns/Z.s);Z.y=cy-(cy-Z.y)*(ns/Z.s);Z.s=ns;applyZ()};
+const center=()=>{const r=vp.getBoundingClientRect();return[r.width/2,r.height/2]};
+$('zIn').onclick=()=>zoomAt(1.5,...center());$('zOut').onclick=()=>zoomAt(1/1.5,...center());$('zReset').onclick=()=>{Z={s:1,x:0,y:0};applyZ()};
+vp.addEventListener('wheel',e=>{e.preventDefault();const r=vp.getBoundingClientRect();zoomAt(Math.exp(-e.deltaY*.0018),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+const ptrs=new Map();let last=null,pinch=null,moved=0,lastTap=0;
+vp.addEventListener('pointerdown',e=>{vp.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:Z.s}}else{last=[e.clientX,e.clientY];vp.classList.add('dragging')}});
+vp.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,[e.clientX,e.clientY]);const r=vp.getBoundingClientRect();if(ptrs.size===2&&pinch){const[a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);zoomAt((pinch.s*d/pinch.d)/Z.s,(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top);moved+=10}else if(last){const dx=e.clientX-last[0],dy=e.clientY-last[1];moved+=Math.abs(dx)+Math.abs(dy);Z.x+=dx;Z.y+=dy;last=[e.clientX,e.clientY];applyZ()}});
+const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size){vp.classList.remove('dragging');if(moved<6){const now=Date.now(),r=vp.getBoundingClientRect();if(now-lastTap<320||e.pointerType==='mouse'){if(Z.s>1.01){Z={s:1,x:0,y:0};applyZ()}else zoomAt(2.4,e.clientX-r.left,e.clientY-r.top);lastTap=0}else lastTap=now}last=null}};
+vp.addEventListener('pointerup',up);vp.addEventListener('pointercancel',up);
+const ro=new ResizeObserver(()=>applyZ());ro.observe(vp);
+
+const dust=$('dust'),dctx=dust.getContext('2d');let parts=[],raf=0;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const tick=()=>{dctx.clearRect(0,0,dust.width,dust.height);parts=parts.filter(p=>p.l>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.97;p.l-=.018;dctx.fillStyle=`rgba(226,196,160,${p.l*.8})`;dctx.fillRect(p.x,p.y,p.s,p.s)});raf=parts.length?requestAnimationFrame(tick):0;if(!raf)dctx.clearRect(0,0,dust.width,dust.height)};
+const puff=()=>{if(reduce)return;const r=dust.getBoundingClientRect(),dp=devicePixelRatio||1;dust.width=r.width*dp;dust.height=r.height*dp;const cx=dust.width/2,cy=dust.height*.48;for(let i=0;i<140;i++){const a=Math.random()*Math.PI*2,v=(1+Math.random()*5)*dp;parts.push({x:cx+Math.cos(a)*20,y:cy+Math.sin(a)*20,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:1,s:(1+Math.random()*2.5)*dp})}if(!raf)tick()};
+
+let AC=null,soundOn=false,amb=null;
+const ac=()=>{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC};
+const noiseBuf=c=>{const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b};
+const sfx=type=>{if(!soundOn)return;try{const c=ac(),t=c.currentTime;if(type==='brush'){const s=c.createBufferSource(),g=c.createGain();s.buffer=noiseBuf(c);const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.setValueAtTime(1800,t);bp.frequency.exponentialRampToValueAtTime(600,t+.7);s.connect(bp).connect(g).connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+.8);s.start(t);s.stop(t+.85)}else{(type==='good'?[523,659,784]:[180,120]).forEach((fq,i)=>{const o=c.createOscillator(),og=c.createGain();o.type=type==='good'?'triangle':'sine';o.frequency.value=fq;o.connect(og).connect(c.destination);const st=t+i*.11;og.gain.setValueAtTime(0,st);og.gain.linearRampToValueAtTime(.16,st+.02);og.gain.exponentialRampToValueAtTime(.001,st+.45);o.start(st);o.stop(st+.5)})}}catch(e){}};
+const ambience=on=>{try{if(on&&!amb){const c=ac(),s=c.createBufferSource();s.buffer=noiseBuf(c);s.loop=true;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=380;const g=c.createGain();g.gain.value=.035;const lfo=c.createOscillator(),lg=c.createGain();lfo.frequency.value=.08;lg.gain.value=.025;lfo.connect(lg).connect(g.gain);s.connect(lp).connect(g).connect(c.destination);s.start();lfo.start();amb={s,lfo}}else if(!on&&amb){amb.s.stop();amb.lfo.stop();amb=null}}catch(e){}};
+const evoke=()=>{try{const c=ac(),t=c.currentTime,lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.connect(c.destination);[110,220,330,165].forEach((fq,i)=>{const o=c.createOscillator(),g=c.createGain(),v=c.createOscillator(),vg=c.createGain();o.type=i?'sine':'sawtooth';o.frequency.value=fq;v.frequency.value=4.5;vg.gain.value=fq*.012;v.connect(vg).connect(o.frequency);o.connect(g).connect(lp);const a=.12/(i+1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+.35);g.gain.setValueAtTime(a,t+1.6);g.gain.exponentialRampToValueAtTime(.0005,t+2.8);o.start(t);v.start(t);o.stop(t+2.9);v.stop(t+2.9)})}catch(e){}};
+$('soundBtn').onclick=()=>{soundOn=!soundOn;$('soundBtn').setAttribute('aria-pressed',soundOn);$('soundLbl').textContent=soundOn?'Son activé':'Son coupé';$('soundWave').setAttribute('d',soundOn?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');ambience(soundOn)};
+
+const show=(i,anim)=>{const c=round.clues[i];[...zoomable.children].forEach(o=>{o.classList.remove('enter');o.classList.add('leave');setTimeout(()=>o.remove(),620)});const d=document.createElement('div');d.className='layer'+(anim?' enter':'');d.innerHTML=draw(round,c);zoomable.appendChild(d);Z={s:1,x:0,y:0};applyZ();
+$('stepTag').innerHTML=`Indice <b>${i+1}</b> / 5`;const ct=$('certTag');ct.className='tag cert '+(c.cert==='reconst'?'':c.cert);ct.textContent=CERT[c.cert];
+$('clueTitle').textContent=c.title;$('clueText').textContent=c.text;$('stepN').textContent=over?`Indice ${i+1} sur 5 · manche terminée`:i===step?`Indice ${i+1} sur 5`:`Tu revois l'indice ${i+1} · actuel : ${step+1}`;if(anim){puff();sfx('brush')}};
+
+const total=()=>results.reduce((s,r)=>s+r.pts,0);
+const renderTop=()=>{if(mode==='jour'){$('roundInfo').innerHTML=`Défi du ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} <small>· identique pour tous</small>`;$('scoreInfo').textContent=`Niveau : ${LEVELS[round.level]}`}else{$('roundInfo').innerHTML=`Manche ${qi+1} / ${queue.length} <small>· ${LEVELS[round.level]}</small>`;$('scoreInfo').textContent=`Score : ${total()} pts`}$('levels').hidden=mode!=='libre'};
+const renderTrack=()=>{$('track').innerHTML=round.clues.map((c,i)=>{const cls=[i<step?'done':'',i===step&&!over?'current':'',i===view?'viewing':'',i>step?'locked':''].join(' ');return`<li><button class="${cls}" data-i="${i}" ${i>step?'aria-disabled="true"':''} aria-label="Indice ${i+1}, ${POINTS[i]} points"><b>${i+1}</b>${POINTS[i]} pts</button></li>`}).join('');
+const res=results[results.length-1];$('ptsNow').innerHTML=over?`${res&&res.id===round.answer?res.pts:0} <small>pts sur cette manche</small>`:`${POINTS[step]} <small>pts si tu trouves maintenant</small>`;
+$('skipMain').textContent=over?'Voir la fiche':step===4?'Révéler la réponse':'Indice suivant';$('skipSub').textContent=over?'et la suite':step===4?'0 point':`la bonne réponse vaudra ${POINTS[step+1]} pts`;
+$('tried').innerHTML=tried.map(id=>`<li>${byId[id].name}</li>`).join('');$('guess').disabled=over;$('submitBtn').disabled=over||!sel};
+$('track').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;if(i>step||i===view)return;view=i;show(i,false);renderTrack()};
+
+const startRound=r=>{round=r;step=0;view=0;over=false;tried=[];sel=null;$('guess').value='';fb('');closeS();show(0,true);renderTrack();renderTop()};
+const advance=()=>{if(step<4){step++;view=step;show(step,true);renderTrack()}else finish(false)};
+
+const suggest=()=>{const q=norm($('guess').value);sel=null;$('submitBtn').disabled=true;if(!q){list=[];closeS();return}list=SPECIES.map(s=>{const keys=[s.name,...s.alias].map(norm);let sc=99;keys.forEach(k=>{if(k.startsWith(q))sc=Math.min(sc,0);else if(k.includes(q))sc=Math.min(sc,1);else if(q.length>=3){const d=Math.min(...[-1,0,1].map(o=>lev(q,k.slice(0,q.length+o))));if(d<=(q.length>5?2:1))sc=Math.min(sc,2+d)}});return{s,sc}}).filter(o=>o.sc<99).sort((a,b)=>a.sc-b.sc||a.s.name.localeCompare(b.s.name)).slice(0,7).map(o=>o.s);hi=list.findIndex(s=>!tried.includes(s.id));renderS()};
+const renderS=()=>{const ul=$('sugg');ul.innerHTML=list.length?list.map((s,i)=>`<li role="option" id="opt-${s.id}" data-id="${s.id}" aria-selected="${i===hi}" class="${tried.includes(s.id)?'tried':''}">${s.name}</li>`).join(''):'<li class="empty">Aucun animal de la liste ne correspond</li>';ul.hidden=false;$('guess').setAttribute('aria-expanded','true');if(hi>=0)$('guess').setAttribute('aria-activedescendant','opt-'+list[hi].id);const ex=list.find(s=>[s.name,...s.alias].some(k=>norm(k)===norm($('guess').value))&&!tried.includes(s.id));if(ex){sel=ex.id;$('submitBtn').disabled=false}};
+const closeS=()=>{$('sugg').hidden=true;$('guess').setAttribute('aria-expanded','false');$('guess').removeAttribute('aria-activedescendant')};
+const pick=id=>{if(tried.includes(id))return;sel=id;$('guess').value=byId[id].name;closeS();$('submitBtn').disabled=false;$('submitBtn').focus()};
+$('guess').addEventListener('input',suggest);$('guess').addEventListener('focus',()=>{if($('guess').value&&!sel)suggest()});
+$('guess').addEventListener('keydown',e=>{if($('sugg').hidden&&e.key!=='Enter')return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!list.length)return;let n=hi;do{n=(n+(e.key==='ArrowDown'?1:-1)+list.length)%list.length}while(tried.includes(list[n].id)&&n!==hi);hi=n;renderS()}else if(e.key==='Enter'){e.preventDefault();if(!$('sugg').hidden&&hi>=0&&list[hi])pick(list[hi].id);else if(sel)submit()}else if(e.key==='Escape')closeS()});
+$('sugg').addEventListener('pointerdown',e=>{const li=e.target.closest('li[data-id]');if(li){e.preventDefault();pick(li.dataset.id)}});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.combo'))closeS()});
+
+const fb=(t,c)=>{const p=$('feedback');p.textContent=t;p.className='feedback '+(c||'')};
+const submit=()=>{if(over||!sel)return;const id=sel;sel=null;$('guess').value='';$('submitBtn').disabled=true;if(id===round.answer){fb(`Bravo, c'est bien ${byId[id].name} ! +${POINTS[step]} pts`,'good');sfx('good');finish(true)}else{tried.push(id);sfx('bad');fb(step<4?`Ce n'est pas ${byId[id].name}. Un nouvel indice se dévoile…`:`Ce n'est pas ${byId[id].name}.`,'bad');advance()}};
+$('submitBtn').onclick=submit;
+$('skipBtn').onclick=()=>{if(over){openSheet();return}fb('');advance()};
+
+const dayKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dailyIndex=()=>{const d=new Date();const n=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);const perm=[...ROUNDS.keys()].sort((a,b)=>((a*7919+13)%101)-((b*7919+13)%101));return perm[n%ROUNDS.length]};
+
+const finish=won=>{const at=step;over=true;const res={id:round.answer,won,pts:won?POINTS[at]:0,step:at,tried:[...tried]};results.push(res);if(mode==='jour')store.set('fragments-jour-'+dayKey(),res);step=4;view=4;show(4,true);renderTrack();renderTop();setTimeout(openSheet,reduce?100:1300)};
+
+const shareLine=r=>{let s='';for(let i=0;i<5;i++)s+=i<r.step?'🟥':i===r.step&&r.won?'🟩':r.won?'⬜':'🟥';return s};
+const copy=async(text,btn)=>{try{await navigator.clipboard.writeText(text);btn.textContent='Copié !'}catch(e){btn.textContent='Copie impossible ici'}};
+
+const openSheet=()=>{const S=round.sheet,sp=byId[round.answer],res=results[results.length-1]||{won:false,pts:0,step:4,tried:[]};const tri=res.tried||[];const conf=[...new Set([...tri,...Object.keys(S.confusions)])];const last=mode==='libre'&&qi>=queue.length-1;
+$('sheet').innerHTML=`<div class="sheet-hero">${fullArt(round)}<div class="result"><span class="tag">${res.won?`Trouvé à l'indice ${res.step+1} · <b>${res.pts} pts</b>`:'Pas trouvé cette fois'}</span><span class="tag">Niveau : ${LEVELS[round.level]}</span></div></div>
+<div class="sheet-body"><div><h2 id="ficheName">${sp.name}</h2><p><em>${S.latin}</em> · ${S.meaning}</p></div>
+<dl class="facts">${S.facts.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
+<div class="cols"><div><h3>Les détails qui le trahissaient</h3><ol class="why">${S.why.map((w,i)=>`<li class="${res.won&&i===res.step?'hit':''}"><i>${i+1}</i><div><strong>${w[0]}</strong>${w[1]}</div></li>`).join('')}</ol></div>
+<div class="side"><div><h3>Ce que l'on ignore</h3><ul class="unknown">${S.unknown.map(u=>`<li><b><span class="cert ${u[0]}"></span>${u[1]}</b>${u[2]}${u[3]?'<br><button class="listen" id="listenBtn">Écouter une évocation inventée</button>':''}</li>`).join('')}</ul></div>
+<div><h3>À ne pas confondre</h3><ul class="confus">${conf.map(id=>`<li class="${tri.includes(id)?'mine':''}"><strong>${byId[id].name}</strong> — ${S.confusions[id]||byId[id].info}</li>`).join('')}</ul></div></div></div>
+<p class="note">Le saviez-vous ? ${S.fun}</p>
+<div><h3>Sources</h3><ol class="sources">${S.sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join('')}</ol></div>
+<div class="sheet-actions">${mode==='jour'?`<button class="btn primary" id="copyBtn">Copier mon résultat</button><button class="btn ghost" id="toFree">Faire une partie libre</button>`:last?`<button class="btn primary" id="nextBtn">Voir le bilan</button>`:`<button class="btn primary" id="nextBtn">Manche suivante</button>`}<button class="btn ghost" id="closeSheet">Revoir les indices</button></div>
+<p class="note">Illustrations vectorielles schématiques réalisées pour le prototype.</p></div>`;
+$('fiche').hidden=false;$('sheet').parentElement.scrollTop=0;
+$('closeSheet').onclick=()=>{$('fiche').hidden=true};
+if($('listenBtn'))$('listenBtn').onclick=evoke;
+if($('nextBtn'))$('nextBtn').onclick=()=>{if(last)openBilan();else{qi++;$('fiche').hidden=true;startRound(ROUNDS[queue[qi]])}};
+if($('copyBtn'))$('copyBtn').onclick=e=>copy(`Fragments · défi du ${new Date().toLocaleDateString('fr-FR')}\n${shareLine(res)} ${res.won?`trouvé à l'indice ${res.step+1}, ${res.pts} pts`:'pas trouvé'}`,e.currentTarget);
+if($('toFree'))$('toFree').onclick=()=>setMode('libre');
+($('nextBtn')||$('copyBtn')).focus()};
+
+const openBilan=()=>{const t=total(),max=queue.length*100;$('sheet').innerHTML=`<div class="bilan"><div><h2 id="ficheName">Bilan de la partie</h2><p class="note">${queue.length} manches · niveau ${level==='tous'?'tous niveaux':LEVELS[level].toLowerCase()}</p></div><div><span class="big">${t}</span> <span class="note">pts sur ${max} possibles</span></div><ul class="recap">${results.map(r=>`<li><span><strong>${byId[r.id].name}</strong><br><span class="note">${r.won?`trouvé à l'indice ${r.step+1}`:'pas trouvé'}</span></span><span class="dots">${[0,1,2,3,4].map(i=>`<i class="${i<r.step||(!r.won&&i<=r.step)?'w':i===r.step&&r.won?'g':''}"></i>`).join('')}</span><b>${r.pts} pts</b></li>`).join('')}</ul><div class="sheet-actions"><button class="btn primary" id="again">Nouvelle partie</button><button class="btn ghost" id="copyAll">Copier le bilan</button></div></div>`;
+$('fiche').hidden=false;$('again').focus();$('again').onclick=()=>{$('fiche').hidden=true;newGame()};$('copyAll').onclick=e=>copy(`Fragments · partie libre : ${t} pts\n`+results.map(r=>`${shareLine(r)} ${byId[r.id].name}`).join('\n'),e.currentTarget)};
+
+$('fiche').addEventListener('click',e=>{if(e.target.id==='fiche')$('fiche').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('fiche').hidden)$('fiche').hidden=true});
+
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const newGame=()=>{results=[];qi=0;queue=shuffle([...ROUNDS.keys()].filter(i=>level==='tous'||ROUNDS[i].level===level));startRound(ROUNDS[queue[0]])};
+const setMode=m=>{mode=m;$('fiche').hidden=true;document.querySelectorAll('.chip[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));if(m==='libre'){newGame();return}results=[];const r=ROUNDS[dailyIndex()];const saved=store.get('fragments-jour-'+dayKey());startRound(r);if(saved&&saved.id===r.answer){results=[saved];tried=saved.tried||[];over=true;step=4;view=4;show(4,false);renderTrack();renderTop();fb(saved.won?`Défi déjà relevé aujourd'hui : ${saved.pts} pts. Nouveau défi demain.`:"Défi déjà joué aujourd'hui. Nouveau défi demain.",saved.won?'good':'')}};
+document.querySelectorAll('.chip[data-mode]').forEach(b=>b.onclick=()=>{if(b.getAttribute('aria-pressed')!=='true')setMode(b.dataset.mode)});
+document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{level=b.dataset.level;document.querySelectorAll('#levels button').forEach(x=>x.setAttribute('aria-pressed',x===b));newGame()});
+
+newGame();
+}
+</script>
+</body>
+</html>
