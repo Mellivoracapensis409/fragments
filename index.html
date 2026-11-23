@@ -42,7 +42,7 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;b
 main{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px 22px;align-items:start}
 .subbar{grid-column:1/-1;display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
 .subbar .info{display:flex;gap:16px;flex-wrap:wrap;font-weight:600}
-.subbar .info span{white-space:nowrap}
+.subbar .info span{white-space:nowrap;display:inline-block}
 .subbar .info small{font-weight:500;color:var(--soft)}
 .levels{display:flex;margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
 .levels button{border:0;background:transparent;border-radius:999px;min-height:38px;padding:0 14px;cursor:pointer;font-size:14px;color:var(--soft);white-space:nowrap}
@@ -156,6 +156,30 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;display:grid
 .bilan{padding:clamp(20px,4vw,40px);display:grid;gap:22px}
 @media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.cols{grid-template-columns:minmax(0,1fr)}.levels{margin-left:0}}
 @media(max-width:600px){header{padding-bottom:18px}.brand h1{font-size:34px}.modes{order:3;width:100%;overflow-x:auto;flex-wrap:nowrap}main{padding-top:12px;gap:12px}.stage{aspect-ratio:4/3.4;border-radius:12px}.hud.bl{display:none}.panel{padding:16px}.sheet h2{font-size:40px}.sheet-hero{aspect-ratio:8/5.4}#clueTitle{font-size:28px}.levels{width:100%}.levels button{flex:1;padding:0 6px}}
+.glow{position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit}
+.glow.bad{animation:gbad .8s ease-out}
+.glow.good{animation:ggood 1.4s ease-out}
+@keyframes gbad{0%{box-shadow:inset 0 0 0 4px #ff6a4d,inset 0 0 80px rgba(255,90,60,.45)}100%{box-shadow:inset 0 0 0 0 transparent}}
+@keyframes ggood{0%{box-shadow:inset 0 0 0 4px #14b1c4,inset 0 0 110px rgba(20,177,196,.5)}100%{box-shadow:inset 0 0 0 0 transparent}}
+.stage.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+.txt-in{animation:txtin .5s cubic-bezier(.2,.7,.2,1) both}
+#clueText.txt-in{animation-delay:.08s}
+@keyframes txtin{from{opacity:0;transform:translateY(8px)}}
+.pts.pop,.subbar .pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{40%{transform:scale(1.18)}}
+.track button.current{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+.tried-list li{animation:txtin .35s both}
+#sugg:not([hidden]){animation:txtin .18s both}
+.feedback:not(:empty){animation:txtin .3s both}
+.btn,.chip,.zbtn,.track button,.levels button,.icon-btn{transition:transform .12s,background-color .2s,box-shadow .2s}
+.btn:active,.chip:active,.zbtn:active,.track button:active,.levels button:active,.icon-btn:active{transform:scale(.96)}
+.btn.primary:not([disabled]):hover{box-shadow:0 6px 16px -6px rgba(122,47,29,.7)}
+.sheet-body>*{animation:txtin .5s cubic-bezier(.2,.7,.2,1) both}
+.sheet-body>*:nth-child(2){animation-delay:.08s}.sheet-body>*:nth-child(3){animation-delay:.16s}.sheet-body>*:nth-child(4){animation-delay:.24s}.sheet-body>*:nth-child(n+5){animation-delay:.3s}
+.recap li{animation:txtin .4s both}.recap li:nth-child(2){animation-delay:.06s}.recap li:nth-child(3){animation-delay:.12s}.recap li:nth-child(4){animation-delay:.18s}.recap li:nth-child(5){animation-delay:.24s}.recap li:nth-child(n+6){animation-delay:.3s}
+.result .tag{animation:pop .6s .3s cubic-bezier(.2,1.6,.4,1) both}
+@media(prefers-reduced-motion:reduce){.glow,.stage.shake,.txt-in,.pts.pop,.subbar .pop,.track button.current,.tried-list li,#sugg,.feedback,.sheet-body>*,.recap li,.result .tag{animation:none!important}.btn:active,.chip:active,.zbtn:active{transform:none}}
 @media(prefers-reduced-motion:reduce){.layer.enter,.layer.leave,.sheet{animation:none}.layer.leave{opacity:0}}
 </style>
 </head>
@@ -168,7 +192,7 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;display:grid
 <button class="chip" data-mode="animal" aria-pressed="false">Animaux actuels</button>
 <button class="chip" data-mode="jour" aria-pressed="false">Défi du jour</button>
 </div>
-<button class="icon-btn" id="soundBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWave" d="M17 9l4 6M21 9l-4 6"/></svg><span id="soundLbl">Son coupé</span></button>
+<button class="icon-btn" id="soundBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWave" d="M17 9l4 6M21 9l-4 6"/></svg><span id="soundLbl">Sons activés</span></button>
 </div>
 </header>
 <main>
@@ -184,7 +208,7 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;display:grid
 <section class="stage" aria-label="Zone d'observation du fossile">
 <div class="viewport" id="viewport"><div class="zoomable" id="zoomable"></div></div>
 <svg class="grid" viewBox="0 0 800 540" preserveAspectRatio="none" aria-hidden="true" id="gridSvg"></svg>
-<canvas class="dust" id="dust"></canvas>
+<canvas class="dust" id="dust"></canvas><div class="glow" id="glow"></div>
 <div class="hud tl"><span class="tag" id="stepTag">Indice 1 / 5</span><span class="tag cert" id="certTag">Établi par les fossiles</span></div>
 <div class="hud bl"><span class="tag" id="zoomTag">Pince ou molette pour zoomer</span></div>
 <div class="hud br"><button class="zbtn" id="zOut" aria-label="Dézoomer">−</button><button class="zbtn" id="zIn" aria-label="Zoomer">+</button><button class="zbtn small" id="zReset">1:1</button></div>
@@ -877,50 +901,63 @@ const ro=new ResizeObserver(()=>applyZ());ro.observe(vp);
 
 const dust=$('dust'),dctx=dust.getContext('2d');let parts=[],raf=0;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const tick=()=>{dctx.clearRect(0,0,dust.width,dust.height);parts=parts.filter(p=>p.l>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.97;p.l-=.018;dctx.fillStyle=`rgba(226,196,160,${p.l*.8})`;dctx.fillRect(p.x,p.y,p.s,p.s)});raf=parts.length?requestAnimationFrame(tick):0;if(!raf)dctx.clearRect(0,0,dust.width,dust.height)};
-const puff=()=>{if(reduce)return;const r=dust.getBoundingClientRect(),dp=devicePixelRatio||1;dust.width=r.width*dp;dust.height=r.height*dp;const cx=dust.width/2,cy=dust.height*.48;for(let i=0;i<140;i++){const a=Math.random()*Math.PI*2,v=(1+Math.random()*5)*dp;parts.push({x:cx+Math.cos(a)*20,y:cy+Math.sin(a)*20,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:1,s:(1+Math.random()*2.5)*dp})}if(!raf)tick()};
+const tick=()=>{dctx.clearRect(0,0,dust.width,dust.height);parts=parts.filter(p=>p.l>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.97;p.l-=.018;dctx.fillStyle=p.g?`rgba(${120+Math.round(p.l*120)},${210},${220},${p.l})`:`rgba(226,196,160,${p.l*.8})`;dctx.fillRect(p.x,p.y,p.s,p.s)});raf=parts.length?requestAnimationFrame(tick):0;if(!raf)dctx.clearRect(0,0,dust.width,dust.height)};
+const puff=(kind)=>{if(reduce)return;const gold=kind==='gold';const r=dust.getBoundingClientRect(),dp=devicePixelRatio||1;dust.width=r.width*dp;dust.height=r.height*dp;const cx=dust.width/2,cy=dust.height*.48;for(let i=0;i<(gold?220:140);i++){const a=Math.random()*Math.PI*2,v=(1+Math.random()*(gold?8:5))*dp;parts.push({x:cx+Math.cos(a)*20,y:cy+Math.sin(a)*20,vx:Math.cos(a)*v,vy:Math.sin(a)*v-(gold?3:1),l:1,s:(1+Math.random()*(gold?3.5:2.5))*dp,g:gold})}if(!raf)tick()};
 
-let AC=null,soundOn=false,amb=null;
-const ac=()=>{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC};
+let AC=null,master=null,unlocked=false,soundOn=(()=>{try{return localStorage.getItem('fragments-son')!=='0'}catch(e){return true}})();
+const ac=()=>{if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55;master.connect(AC.destination)}if(AC.state==='suspended')AC.resume();return AC};
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{unlocked=true;if(soundOn)ac()},{once:true,capture:true}));
 const noiseBuf=c=>{const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b};
-const sfx=type=>{if(!soundOn)return;try{const c=ac(),t=c.currentTime;if(type==='brush'){const s=c.createBufferSource(),g=c.createGain();s.buffer=noiseBuf(c);const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.setValueAtTime(1800,t);bp.frequency.exponentialRampToValueAtTime(600,t+.7);s.connect(bp).connect(g).connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+.8);s.start(t);s.stop(t+.85)}else{(type==='good'?[523,659,784]:[180,120]).forEach((fq,i)=>{const o=c.createOscillator(),og=c.createGain();o.type=type==='good'?'triangle':'sine';o.frequency.value=fq;o.connect(og).connect(c.destination);const st=t+i*.11;og.gain.setValueAtTime(0,st);og.gain.linearRampToValueAtTime(.16,st+.02);og.gain.exponentialRampToValueAtTime(.001,st+.45);o.start(st);o.stop(st+.5)})}}catch(e){}};
-const ambience=on=>{try{if(on&&!amb){const c=ac(),s=c.createBufferSource();s.buffer=noiseBuf(c);s.loop=true;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=380;const g=c.createGain();g.gain.value=.035;const lfo=c.createOscillator(),lg=c.createGain();lfo.frequency.value=.08;lg.gain.value=.025;lfo.connect(lg).connect(g.gain);s.connect(lp).connect(g).connect(c.destination);s.start();lfo.start();amb={s,lfo}}else if(!on&&amb){amb.s.stop();amb.lfo.stop();amb=null}}catch(e){}};
+const tone=(c,fq,st,dur,peak,type='sine',to)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(fq,st);if(to)o.frequency.exponentialRampToValueAtTime(to,st+dur);o.connect(g).connect(master);g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(peak,st+.015);g.gain.exponentialRampToValueAtTime(.0008,st+dur);o.start(st);o.stop(st+dur+.05)};
+const noise=(c,st,dur,peak,f0,f1,type='bandpass')=>{const s=c.createBufferSource(),g=c.createGain(),bp=c.createBiquadFilter();s.buffer=noiseBuf(c);bp.type=type;bp.frequency.setValueAtTime(f0,st);bp.frequency.exponentialRampToValueAtTime(f1,st+dur);s.connect(bp).connect(g).connect(master);g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(peak,st+dur*.2);g.gain.exponentialRampToValueAtTime(.0008,st+dur);s.start(st);s.stop(st+dur+.05)};
+const sfx=type=>{if(!soundOn||!unlocked)return;try{const c=ac(),t=c.currentTime+.01;
+if(type==='brush')noise(c,t,.7,.09,1600,500);
+else if(type==='tick')tone(c,1250,t,.05,.025,'sine');
+else if(type==='skip')noise(c,t,.35,.05,500,2400,'bandpass');
+else if(type==='good'){[659,880,1319].forEach((f,i)=>{tone(c,f,t+i*.09,.9,.06,'sine');tone(c,f*2,t+i*.09,.5,.012,'triangle')})}
+else if(type==='bad'){tone(c,240,t,.28,.08,'sine',120);noise(c,t,.12,.03,300,200,'lowpass')}
+else if(type==='lose'){tone(c,392,t,.5,.05,'triangle');tone(c,311,t+.18,.7,.05,'triangle')}
+else if(type==='fanfare'){[523,659,784,1047].forEach((f,i)=>tone(c,f,t+i*.12,1,.05,'triangle'))}}catch(e){}};
+
 const evoke=()=>{try{const c=ac(),t=c.currentTime,lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.connect(c.destination);[110,220,330,165].forEach((fq,i)=>{const o=c.createOscillator(),g=c.createGain(),v=c.createOscillator(),vg=c.createGain();o.type=i?'sine':'sawtooth';o.frequency.value=fq;v.frequency.value=4.5;vg.gain.value=fq*.012;v.connect(vg).connect(o.frequency);o.connect(g).connect(lp);const a=.12/(i+1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+.35);g.gain.setValueAtTime(a,t+1.6);g.gain.exponentialRampToValueAtTime(.0005,t+2.8);o.start(t);v.start(t);o.stop(t+2.9);v.stop(t+2.9)})}catch(e){}};
-$('soundBtn').onclick=()=>{soundOn=!soundOn;$('soundBtn').setAttribute('aria-pressed',soundOn);$('soundLbl').textContent=soundOn?'Son activé':'Son coupé';$('soundWave').setAttribute('d',soundOn?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');ambience(soundOn)};
+const paintSound=()=>{$('soundBtn').setAttribute('aria-pressed',soundOn);$('soundLbl').textContent=soundOn?'Sons activés':'Sons coupés';$('soundWave').setAttribute('d',soundOn?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6')};paintSound();
+$('soundBtn').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('fragments-son',soundOn?'1':'0')}catch(e){}paintSound();if(soundOn){unlocked=true;sfx('tick')}};
 
 const show=(i,anim)=>{const c=round.clues[i];[...zoomable.children].forEach(o=>{o.classList.remove('enter');o.classList.add('leave');setTimeout(()=>o.remove(),620)});const d=document.createElement('div');d.className='layer'+(anim?' enter':'');d.innerHTML=draw(round,c);zoomable.appendChild(d);Z={s:1,x:0,y:0};applyZ();
 $('stepTag').innerHTML=`Indice <b>${i+1}</b> / 5`;const ct=$('certTag');ct.className='tag cert '+(c.cert==='reconst'?'':c.cert);ct.textContent=CERT[c.cert];
-$('clueTitle').textContent=c.title;$('clueText').textContent=c.text;$('stepN').textContent=over?`Indice ${i+1} sur 5 · manche terminée`:i===step?`Indice ${i+1} sur 5`:`Tu revois l'indice ${i+1} · actuel : ${step+1}`;if(anim){puff();sfx('brush')}};
+$('clueTitle').textContent=c.title;$('clueText').textContent=c.text;$('stepN').textContent=over?`Indice ${i+1} sur 5 · manche terminée`:i===step?`Indice ${i+1} sur 5`:`Tu revois l'indice ${i+1} · actuel : ${step+1}`;if(anim){puff();sfx('brush');['clueTitle','clueText'].forEach(k=>{const e=$(k);e.classList.remove('txt-in');void e.offsetWidth;e.classList.add('txt-in')})}};
 
 const total=()=>results.reduce((s,r)=>s+r.pts,0);
 const renderTop=()=>{if(mode==='jour'){$('roundInfo').innerHTML=`Défi du ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} <small>· identique pour tous</small>`;$('scoreInfo').textContent=`${round.cat==='animal'?'Animal actuel':'Dinosaure'} · ${LEVELS[round.level]}`}else{$('roundInfo').innerHTML=`Manche ${qi+1} / ${queue.length} <small>· ${LEVELS[round.level]}</small>`;$('scoreInfo').textContent=`Score : ${total()} pts`}$('levels').hidden=mode==='jour';document.querySelectorAll('#levels button').forEach(b=>{b.disabled=b.dataset.level!=='tous'&&!ROUNDS.some(r=>r.cat===mode&&r.level===b.dataset.level)})};
 const renderTrack=()=>{$('track').innerHTML=round.clues.map((c,i)=>{const cls=[i<step?'done':'',i===step&&!over?'current':'',i===view?'viewing':'',i>step?'locked':''].join(' ');return`<li><button class="${cls}" data-i="${i}" ${i>step?'aria-disabled="true"':''} aria-label="Indice ${i+1}, ${POINTS[i]} points"><b>${i+1}</b>${POINTS[i]} pts</button></li>`}).join('');
 const res=results[results.length-1];$('ptsNow').innerHTML=over?`${res&&res.id===round.answer?res.pts:0} <small>pts sur cette manche</small>`:`${POINTS[step]} <small>pts si tu trouves maintenant</small>`;
 $('skipMain').textContent=over?'Voir la fiche':step===4?'Révéler la réponse':'Indice suivant';$('skipSub').textContent=over?'et la suite':step===4?'0 point':`la bonne réponse vaudra ${POINTS[step+1]} pts`;
-$('tried').innerHTML=tried.map(id=>`<li>${byId[id].name}</li>`).join('');$('guess').disabled=over;$('submitBtn').disabled=over||!sel};
+$('tried').innerHTML=tried.map(id=>`<li>${byId[id].name}</li>`).join('');$('guess').disabled=over;$('submitBtn').disabled=over||!sel;bumpPts()};
+let lastPts=null;const bumpPts=()=>{const el=$('ptsNow');const n=parseInt(el.textContent,10);if(lastPts!==null&&lastPts!==n&&!reduce){const small=el.querySelector('small').outerHTML,from=lastPts,t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/450);el.innerHTML=Math.round(from+(n-from)*(1-(1-k)**3))+' '+small;if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}lastPts=n};
+const flash=k=>{const g=$('glow');g.className='glow';void g.offsetWidth;g.className='glow '+k;if(k==='bad'){const st=document.querySelector('.stage');st.classList.remove('shake');void st.offsetWidth;st.classList.add('shake')}};
 $('track').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;if(i>step||i===view)return;view=i;show(i,false);renderTrack()};
 
 const startRound=r=>{round=r;$('guess').placeholder=r.cat==='animal'?'Tape un nom : tigre, loup, girafe…':'Tape un nom : stego, tricé, rex…';step=0;view=0;over=false;tried=[];sel=null;$('guess').value='';fb('');closeS();show(0,true);renderTrack();renderTop()};
 const advance=()=>{if(step<4){step++;view=step;show(step,true);renderTrack()}else finish(false)};
 
-const suggest=()=>{const q=norm($('guess').value);sel=null;$('submitBtn').disabled=true;if(!q){list=[];closeS();return}list=SPECIES.filter(s=>(s.cat||'dino')===round.cat).map(s=>{const keys=[s.name,...s.alias].map(norm);let sc=99;keys.forEach(k=>{if(k.startsWith(q))sc=Math.min(sc,0);else if(k.includes(q))sc=Math.min(sc,1);else if(q.length>=3){const d=Math.min(...[-1,0,1].map(o=>lev(q,k.slice(0,q.length+o))));if(d<=(q.length>5?2:1))sc=Math.min(sc,2+d)}});return{s,sc}}).filter(o=>o.sc<99).sort((a,b)=>a.sc-b.sc||a.s.name.localeCompare(b.s.name)).slice(0,7).map(o=>o.s);hi=list.findIndex(s=>!tried.includes(s.id));renderS()};
+const suggest=()=>{const q=norm($('guess').value);sel=null;$('submitBtn').disabled=true;if(!q){list=[];closeS();return}list=SPECIES.filter(s=>(s.cat||'dino')===round.cat).map(s=>{const keys=[s.name,...s.alias].map(norm);let sc=99;keys.forEach((k,ki)=>{if(k===q)sc=Math.min(sc,-1);else if(k.startsWith(q))sc=Math.min(sc,ki?.5:0);else if(k.includes(q))sc=Math.min(sc,1);else if(q.length>=3){const d=Math.min(...[-1,0,1].map(o=>lev(q,k.slice(0,q.length+o))));if(d<=(q.length>5?2:1))sc=Math.min(sc,2+d)}});return{s,sc}}).filter(o=>o.sc<99).sort((a,b)=>a.sc-b.sc||a.s.name.localeCompare(b.s.name)).slice(0,7).map(o=>o.s);hi=list.findIndex(s=>!tried.includes(s.id));renderS()};
 const renderS=()=>{const ul=$('sugg');ul.innerHTML=list.length?list.map((s,i)=>`<li role="option" id="opt-${s.id}" data-id="${s.id}" aria-selected="${i===hi}" class="${tried.includes(s.id)?'tried':''}">${s.name}</li>`).join(''):'<li class="empty">Aucun animal de la liste ne correspond</li>';ul.hidden=false;$('guess').setAttribute('aria-expanded','true');if(hi>=0)$('guess').setAttribute('aria-activedescendant','opt-'+list[hi].id);const ex=list.find(s=>[s.name,...s.alias].some(k=>norm(k)===norm($('guess').value))&&!tried.includes(s.id));if(ex){sel=ex.id;$('submitBtn').disabled=false}};
 const closeS=()=>{$('sugg').hidden=true;$('guess').setAttribute('aria-expanded','false');$('guess').removeAttribute('aria-activedescendant')};
-const pick=id=>{if(tried.includes(id))return;sel=id;$('guess').value=byId[id].name;closeS();$('submitBtn').disabled=false;$('submitBtn').focus()};
+const pick=id=>{if(tried.includes(id))return;sfx('tick');sel=id;$('guess').value=byId[id].name;closeS();$('submitBtn').disabled=false;$('submitBtn').focus()};
 $('guess').addEventListener('input',suggest);$('guess').addEventListener('focus',()=>{if($('guess').value&&!sel)suggest()});
 $('guess').addEventListener('keydown',e=>{if($('sugg').hidden&&e.key!=='Enter')return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!list.length)return;let n=hi;do{n=(n+(e.key==='ArrowDown'?1:-1)+list.length)%list.length}while(tried.includes(list[n].id)&&n!==hi);hi=n;renderS()}else if(e.key==='Enter'){e.preventDefault();if(!$('sugg').hidden&&hi>=0&&list[hi])pick(list[hi].id);else if(sel)submit()}else if(e.key==='Escape')closeS()});
 $('sugg').addEventListener('pointerdown',e=>{const li=e.target.closest('li[data-id]');if(li){e.preventDefault();pick(li.dataset.id)}});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.combo'))closeS()});
 
 const fb=(t,c)=>{const p=$('feedback');p.textContent=t;p.className='feedback '+(c||'')};
-const submit=()=>{if(over||!sel)return;const id=sel;sel=null;$('guess').value='';$('submitBtn').disabled=true;if(id===round.answer){fb(`Bravo, c'est bien ${byId[id].name} ! +${POINTS[step]} pts`,'good');sfx('good');finish(true)}else{tried.push(id);sfx('bad');fb(step<4?`Ce n'est pas ${byId[id].name}. Un nouvel indice se dévoile…`:`Ce n'est pas ${byId[id].name}.`,'bad');advance()}};
+const submit=()=>{if(over||!sel)return;const id=sel;sel=null;$('guess').value='';$('submitBtn').disabled=true;if(id===round.answer){fb(`Bravo, c'est bien ${byId[id].name} ! +${POINTS[step]} pts`,'good');sfx('good');flash('good');puff('gold');finish(true)}else{tried.push(id);sfx('bad');flash('bad');fb(step<4?`Ce n'est pas ${byId[id].name}. Un nouvel indice se dévoile…`:`Ce n'est pas ${byId[id].name}.`,'bad');advance()}};
 $('submitBtn').onclick=submit;
-$('skipBtn').onclick=()=>{if(over){openSheet();return}fb('');advance()};
+$('skipBtn').onclick=()=>{if(over){openSheet();return}fb('');sfx('skip');advance()};
 
 const dayKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const dailyIndex=()=>{const d=new Date();const n=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);const perm=[...ROUNDS.keys()].sort((a,b)=>((a*7919+13)%101)-((b*7919+13)%101));return perm[n%ROUNDS.length]};
 
-const finish=won=>{const at=step;over=true;const res={id:round.answer,won,pts:won?POINTS[at]:0,step:at,tried:[...tried]};results.push(res);if(mode==='jour')store.set('fragments-jour-'+dayKey(),res);step=4;view=4;show(4,true);renderTrack();renderTop();setTimeout(openSheet,reduce?100:1300)};
+const finish=won=>{const at=step;over=true;if(!won){sfx('lose');flash('bad')}else{const si=$('scoreInfo');si.classList.remove('pop');void si.offsetWidth;si.classList.add('pop')}const res={id:round.answer,won,pts:won?POINTS[at]:0,step:at,tried:[...tried]};results.push(res);if(mode==='jour')store.set('fragments-jour-'+dayKey(),res);step=4;view=4;show(4,true);renderTrack();renderTop();setTimeout(openSheet,reduce?100:1300)};
 
 const shareLine=r=>{let s='';for(let i=0;i<5;i++)s+=i<r.step?'🟥':i===r.step&&r.won?'🟩':r.won?'⬜':'🟥';return s};
 const copy=async(text,btn)=>{try{await navigator.clipboard.writeText(text);btn.textContent='Copié !'}catch(e){btn.textContent='Copie impossible ici'}};
@@ -945,7 +982,7 @@ if($('copyBtn'))$('copyBtn').onclick=e=>copy(`Fragments · défi du ${new Date()
 if($('toFree'))$('toFree').onclick=()=>setMode('dino');
 ($('nextBtn')||$('copyBtn')).focus()};
 
-const openBilan=()=>{const t=total(),max=queue.length*100;$('sheet').innerHTML=`<div class="bilan"><div><h2 id="ficheName">Bilan de la partie</h2><p class="note">${queue.length} manches · niveau ${level==='tous'?'tous':LEVELS[level].toLowerCase()}</p></div><div><span class="big">${t}</span> <span class="note">pts sur ${max} possibles</span></div><ul class="recap">${results.map(r=>`<li><span><strong>${byId[r.id].name}</strong><br><span class="note">${r.won?`trouvé à l'indice ${r.step+1}`:'pas trouvé'}</span></span><span class="dots">${[0,1,2,3,4].map(i=>`<i class="${i<r.step||(!r.won&&i<=r.step)?'w':i===r.step&&r.won?'g':''}"></i>`).join('')}</span><b>${r.pts} pts</b></li>`).join('')}</ul><div class="sheet-actions"><button class="btn primary" id="again">Nouvelle partie</button><button class="btn ghost" id="copyAll">Copier le bilan</button></div></div>`;
+const openBilan=()=>{sfx('fanfare');const t=total(),max=queue.length*100;$('sheet').innerHTML=`<div class="bilan"><div><h2 id="ficheName">Bilan de la partie</h2><p class="note">${queue.length} manches · niveau ${level==='tous'?'tous':LEVELS[level].toLowerCase()}</p></div><div><span class="big">${t}</span> <span class="note">pts sur ${max} possibles</span></div><ul class="recap">${results.map(r=>`<li><span><strong>${byId[r.id].name}</strong><br><span class="note">${r.won?`trouvé à l'indice ${r.step+1}`:'pas trouvé'}</span></span><span class="dots">${[0,1,2,3,4].map(i=>`<i class="${i<r.step||(!r.won&&i<=r.step)?'w':i===r.step&&r.won?'g':''}"></i>`).join('')}</span><b>${r.pts} pts</b></li>`).join('')}</ul><div class="sheet-actions"><button class="btn primary" id="again">Nouvelle partie</button><button class="btn ghost" id="copyAll">Copier le bilan</button></div></div>`;
 $('fiche').hidden=false;$('again').focus();$('again').onclick=()=>{$('fiche').hidden=true;newGame()};$('copyAll').onclick=e=>copy(`Fragments · partie libre : ${t} pts\n`+results.map(r=>`${shareLine(r)} ${byId[r.id].name}`).join('\n'),e.currentTarget)};
 
 $('fiche').addEventListener('click',e=>{if(e.target.id==='fiche')$('fiche').hidden=true});
