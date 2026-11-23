@@ -1,6 +1,6 @@
 # Fragments — l'énigme fossile
 
-Jeu de reconnaissance de dinosaures et d'animaux actuels par indices progressifs : un détail, une partie plus large, le contexte, le squelette, puis la reconstitution. Moins on utilise d'indices, plus on marque de points.
+Jeu de reconnaissance de dinosaures, d'animaux préhistoriques et d'animaux actuels par indices progressifs : un détail, une partie plus large, le contexte, le squelette, puis la reconstitution. Moins on utilise d'indices, plus on marque de points.
 
 - Partie libre (6 manches, filtrables par niveau) et défi du jour
 - Fiche de découverte avec indices décisifs, confusions possibles, incertitudes et sources
